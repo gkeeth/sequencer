@@ -48,7 +48,13 @@
           "min_clearance": 0.508
         }
       },
-      "diff_pair_dimensions": [],
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        }
+      ],
       "drc_exclusions": [],
       "meta": {
         "version": 2
@@ -165,8 +171,15 @@
           "td_width_to_size_filter_ratio": 0.9
         }
       ],
-      "track_widths": [],
-      "via_dimensions": [],
+      "track_widths": [
+        0.0
+      ],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "layer_presets": [],
@@ -512,6 +525,13 @@
       "/step_sel1": "digital",
       "/step_sel2": "digital",
       "/tempo_pot": "CV",
+      "Net-(D1-DO)": "digital",
+      "Net-(D2-DO)": "digital",
+      "Net-(D3-DO)": "digital",
+      "Net-(D4-DO)": "digital",
+      "Net-(D5-DO)": "digital",
+      "Net-(D6-DO)": "digital",
+      "Net-(D7-DO)": "digital",
       "Net-(J6-Pin_1)": "power",
       "Net-(R3-Pad2)": "clock",
       "Net-(U4-Pad2)": "clock",
