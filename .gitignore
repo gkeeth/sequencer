@@ -1,0 +1,10 @@
+*.bak
+*-backups/
+*.kicad_prl
+fp-info-cache
+
+*.FCStd1
+
+*.zip
+
+doc/
