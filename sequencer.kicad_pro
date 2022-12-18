@@ -493,7 +493,6 @@
       "/UART_TX": "digital",
       "/clkin": "digital",
       "/clock_out_buffered": "clock",
-      "/clock_out_unbuffered": "clock",
       "/cv_out_buffered": "CV",
       "/cv_out_unbuffered": "CV",
       "/cv_pot_1": "CV",
@@ -504,6 +503,7 @@
       "/cv_pot_6": "CV",
       "/cv_pot_7": "CV",
       "/cv_pot_8": "CV",
+      "/duty_pot": "CV",
       "/internal_clock": "clock",
       "/led_ctrl": "digital",
       "/selected_clock_buffered": "clock",
@@ -512,6 +512,7 @@
       "/step_sel1": "digital",
       "/step_sel2": "digital",
       "/tempo_pot": "CV",
+      "Net-(J6-Pin_1)": "power",
       "Net-(R3-Pad2)": "clock",
       "Net-(U4-Pad2)": "clock",
       "Net-(U4-Pad6)": "clock"
