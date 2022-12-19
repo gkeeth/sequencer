@@ -633,6 +633,8 @@
     ]
   ],
   "text_variables": {
-    "rev": "0"
+    "date": "2022-12-18",
+    "rev": "0",
+    "url": "github.com/gkeeth/cv-sequencer"
   }
 }
