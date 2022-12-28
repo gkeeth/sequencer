@@ -9,6 +9,8 @@ Simple 8-step, 0-5V CV sequencer for synthesizers.
 
 Powered from a 9V battery.
 
+This is a KiCad v7 project.
+
 ## License
 This work is licensed under a [Creative Commons Attribution-ShareAlike 4.0
 International License][cc-by-sa].
