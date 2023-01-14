@@ -1797,6 +1797,7 @@
     )
   )
 
+
   (junction (at 318.77 118.11) (diameter 0) (color 0 0 0 0)
     (uuid 010c6fa3-dc75-408c-953b-16a302cad6ff)
   )
@@ -3389,14 +3390,6 @@
     (uuid f3cd06ac-c3fe-4d22-9050-6eecade140d8)
   )
 
-  (text_box "TODO\n- check voltage levels for mux select bits"
-    (at 82.55 241.3 0) (size 58.42 16.51)
-    (stroke (width 0) (type default))
-    (fill (type none))
-    (effects (font (size 1.27 1.27)) (justify left top))
-    (uuid b92c1190-3b38-4ec7-8b73-32b3987e7860)
-  )
-
   (text "ADC_IN9" (at 176.53 172.72 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 0823a8a5-af4e-4e1c-b0c8-766aea47fd8f)
@@ -4426,7 +4419,7 @@
     (property "Reference" "U2" (at 310.4641 19.05 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "74HC4051" (at 310.4641 21.59 0)
+    (property "Value" "74HCT4051" (at 310.4641 21.59 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Footprint" "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" (at 312.42 43.18 0)

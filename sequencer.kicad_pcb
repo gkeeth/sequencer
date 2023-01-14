@@ -5951,7 +5951,7 @@
     (start 109 102.4) (end 148 113) (layer "B.SilkS") (tstamp 772639bc-68a7-46e8-ab43-ae709a7e6c27)
       (effects (font (size 1.5 1.5) (thickness 0.3) bold) (justify left top mirror))
   )
-  (gr_text_box "TODO\n- labels for switches, jacks, connectors, pots\n- figure out if it's ok to drive 3V3 into analog switch\n- put ground plane adjacent to bottom?"
+  (gr_text_box "TODO\n- labels for switches, jacks, connectors, pots\n- put ground plane adjacent to bottom?"
     (start 22.5 178) (end 93.5 192) (layer "Cmts.User") (tstamp 7e3f858d-04ed-4818-aaae-48e1ff4f6ed3)
       (effects (font (size 1 1) (thickness 0.15)) (justify left top))
     (stroke (width 0.15) (type solid))  )
