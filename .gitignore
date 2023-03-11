@@ -10,3 +10,11 @@ fp-info-cache
 
 fab/
 doc/
+
+# firmware
+*.elf
+*.bin
+*.o
+*.d
+blink
+sequencer
