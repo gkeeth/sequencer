@@ -6,5 +6,7 @@ fp-info-cache
 *.FCStd1
 
 *.zip
+*.xml
 
+fab/
 doc/
