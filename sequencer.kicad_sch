@@ -1,4 +1,4 @@
-(kicad_sch (version 20221206) (generator eeschema)
+(kicad_sch (version 20230121) (generator eeschema)
 
   (uuid bbdda03d-2864-473b-99a3-acb9c1fabb00)
 
@@ -4662,6 +4662,14 @@
     (stroke (width 0) (type dash))
     (fill (type none))
     (uuid f3cd06ac-c3fe-4d22-9050-6eecade140d8)
+  )
+
+  (text_box "TO FIX FOR R1\n\n- remove 3V3 from UART output\n- make JTAG connector cheaper\n- check ground layer adjacency"
+    (at 445.77 129.54 0) (size 53.34 87.63)
+    (stroke (width 0) (type default))
+    (fill (type none))
+    (effects (font (size 1.27 1.27)) (justify left top))
+    (uuid 9809b61b-e347-497e-b034-bbe6573a2b0a)
   )
 
   (text "ADC_IN9" (at 176.53 172.72 0)
