@@ -16,5 +16,3 @@ doc/
 *.bin
 *.o
 *.d
-blink
-sequencer
