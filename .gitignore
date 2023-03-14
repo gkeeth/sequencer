@@ -16,3 +16,4 @@ doc/
 *.bin
 *.o
 *.d
+sequencer_tests
