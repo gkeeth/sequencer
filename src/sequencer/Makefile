@@ -3,8 +3,8 @@ BUILD_DIR = bin
 
 CFILES = sequencer.c
 
-# Add c files that need to be tested here
-TEST_CFILES =
+# Add project c files that need to be tested here
+TEST_CFILES = tempo_and_duty.c
 
 DEVICE=stm32f031k6t6
 
@@ -14,9 +14,9 @@ MOCKS_DIR = test/mocks
 TEST_BUILD_DIR = $(TEST_DIR)/$(BUILD_DIR)
 TEST_SRC := $(wildcard $(TEST_DIR)/*.cpp)
 TEST_OBJS := $(patsubst %.cpp,$(TEST_BUILD_DIR)/%.o,$(notdir $(TEST_SRC)))
-TEST_CFILE_OBJS := $(patsubst %.c,$(TEsT_BUILD_DIR)/%.o,$(TEST_CFILES))
+TEST_CFILE_OBJS := $(patsubst %.c,$(TEST_BUILD_DIR)/%.o,$(TEST_CFILES))
 CPPUTEST_HOME = test/cpputest
-TEST_INCLUDES = -I$(CPPUTEST_HOME)/include
+TEST_INCLUDES = -I$(CPPUTEST_HOME)/include -I.
 TEST_CC = gcc
 # TODO: may want to make a separate LDLIBS variable for tests
 TEST_LDLIBS += -L$(CPPUTEST_HOME)/build/lib -lCppUTest -lCppUTestExt
