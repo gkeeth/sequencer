@@ -4,7 +4,7 @@ BUILD_DIR = bin
 CFILES = sequencer.c
 
 # Add project c files that need to be tested here
-TEST_CFILES = tempo_and_duty.c utils.c
+TEST_CFILES = utils.c tempo_and_duty.c uart.c
 
 DEVICE=stm32f031k6t6
 
@@ -13,10 +13,12 @@ TEST_DIR = test
 MOCKS_DIR = test/mocks
 TEST_BUILD_DIR = $(TEST_DIR)/$(BUILD_DIR)
 TEST_SRC := $(wildcard $(TEST_DIR)/*.cpp)
+MOCKS_SRC := $(wildcard $(MOCKS_DIR)/*.c)
 TEST_OBJS := $(patsubst %.cpp,$(TEST_BUILD_DIR)/%.o,$(notdir $(TEST_SRC)))
+MOCKS_OBJS := $(patsubst %.c,$(TEST_BUILD_DIR)/%.o,$(notdir $(MOCKS_SRC)))
 TEST_CFILE_OBJS := $(patsubst %.c,$(TEST_BUILD_DIR)/%.o,$(TEST_CFILES))
 CPPUTEST_HOME = test/cpputest
-TEST_INCLUDES = -I$(CPPUTEST_HOME)/include -I.
+TEST_INCLUDES = -I$(CPPUTEST_HOME)/include -I$(TEST_DIR) -I$(MOCKS_DIR) -I.
 TEST_CC = gcc
 # TODO: may want to make a separate LDLIBS variable for tests
 TEST_LDLIBS += -L$(CPPUTEST_HOME)/build/lib -lCppUTest -lCppUTestExt
@@ -47,6 +49,12 @@ $(TEST_BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(Q)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
+# test fake/mock files
+$(TEST_BUILD_DIR)/%.o: $(MOCKS_DIR)/%.c
+	@printf "  CC\t$<\n"
+	@mkdir -p $(dir $@)
+	$(Q)$(TEST_CC) $(CFLAGS) $(CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
+
 # source files
 $(TEST_BUILD_DIR)/%.o: %.c
 	@printf "  CC\t$<\n"
@@ -54,8 +62,13 @@ $(TEST_BUILD_DIR)/%.o: %.c
 	$(Q)$(TEST_CC) $(CFLAGS) $(CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
 # TODO: may need to add libs and ldscript here, not sure yet
-TEST_DEPS = $(TEST_OBJS) $(MOCKS_OBJS) $(TEST_CFILE_OBJS)
+TEST_DEPS = $(TEST_OBJS) $(TEST_CFILE_OBJS) $(MOCKS_OBJS)
 $(TEST_TARGET):	$(TEST_DEPS)
+	@printf "  TEST_DEPS: $(TEST_DEPS)\n"
+	@printf "  TEST_OBJS: $(TEST_OBJS)\n"
+	@printf "  MOCKS_OBJS: $(MOCKS_OBJS)\n"
+	@printf "  TEST_CFILE_OBJS: $(TEST_CFILE_OBJS)\n"
+	@printf "  TEST_LDLIBS: $(TEST_LDLIBS)\n"
 	@printf "  Linking \t$<\n"
 	$(Q)$(CXX) -o $@ $^ $(TEST_LDLIBS) $(LDFLAGS)
 
@@ -74,7 +87,9 @@ print_vars:
 	$(info COMPILE.c: $(COMPILE.c))
 	$(info OBJS: $(OBJS))
 	$(info TEST_SRC: $(TEST_SRC))
+	$(info MOCKS_SRC: $(MOCKS_SRC))
 	$(info TEST_OBJS: $(TEST_OBJS))
+	$(info MOCKS_OBJS: $(MOCKS_OBJS))
 	$(info TEST_BUILD_DIR: $(TEST_BUILD_DIR))
 	$(info TEST_DEPS: $(TEST_DEPS))
 	$(info GENERATED_BINS: $(GENERATED_BINS))
