@@ -4,7 +4,7 @@ BUILD_DIR = bin
 CFILES = sequencer.c
 
 # Add project c files that need to be tested here
-TEST_CFILES = tempo_and_duty.c
+TEST_CFILES = tempo_and_duty.c utils.c
 
 DEVICE=stm32f031k6t6
 
