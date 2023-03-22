@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+void failed(char *file, int line);
+#define ASSERT(expr) \
+    if (expr) {} else failed(__FILE__, __LINE__)
+
 uint8_t max_u8(uint8_t a, uint8_t b);
 uint8_t min_u8(uint8_t a, uint8_t b);
 uint16_t max_u16(uint16_t a, uint16_t b);

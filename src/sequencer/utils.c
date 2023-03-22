@@ -1,5 +1,11 @@
 #include "utils.h"
 
+void failed(char *file, int line) {
+    (void *) file;
+    (void) line;
+    while (1) {}; // TODO: file and line to UART
+}
+
 uint8_t max_u8(uint8_t a, uint8_t b) {
     return a > b ? a : b;
 }
