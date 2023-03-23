@@ -1,6 +1,10 @@
 #include <libopencm3/stm32/usart.h>
 #include "uart.h"
-#include "uart_platform.h"
+#include "platform.h"
+
+void uart_setup(void) {
+    uart_setup_platform();
+}
 
 // send a zero-terminated string via uart
 void uart_send_string(const char *s) {

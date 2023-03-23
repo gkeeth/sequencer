@@ -1,10 +1,13 @@
 PROJECT = sequencer
 BUILD_DIR = bin
 
-CFILES = sequencer.c
+# add project c files that don't need to be tested here
+NO_TEST_CFILES = sequencer.c platform.c
 
-# Add project c files that need to be tested here
+# Add project c files that do need to be tested here
 TEST_CFILES = utils.c tempo_and_duty.c uart.c
+
+CFILES = $(NO_TEST_CFILES) $(TEST_CFILES)
 
 DEVICE=stm32f031k6t6
 

@@ -1,8 +1,13 @@
-#include "uart_platform.h"
+#include <string.h>
+#include "platform.h"
 #include "uart_platform_fake.h"
 
 static unsigned num_chars_sent = 0;
 static char buffer[BUFFER_SIZE];
+
+void uart_setup_platform(void) {
+    return;
+}
 
 void uart_send_char(char c) {
     if (num_chars_sent < BUFFER_SIZE) {
