@@ -2,9 +2,8 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/usart.h>
-#include <libopencm3/cm3/nvic.h>
-#include <libopencm3/cm3/systick.h>
 
+#include "clocks.h"
 #include "uart.h"
 #include "utils.h"
 
@@ -15,18 +14,6 @@
 #define PORT_ADC GPIOB
 #define PIN_DUTY GPIO0
 #define PIN_TEMPO GPIO1
-
-volatile uint32_t counter = 0;
-
-void sys_tick_handler(void) {
-    ++counter;
-}
-
-
-uint32_t millis(void);
-uint32_t millis(void) {
-    return counter;
-}
 
 
 static void adc_setup(void) {
@@ -62,14 +49,7 @@ static void adc_setup(void) {
 
 
 static void setup(void) {
-    // use external 8MHz crystal to derive 48MHz clock from PLL
-    rcc_clock_setup_in_hse_8mhz_out_48mhz();
-    STK_CVR = 0; // clear systick current value to start immediately
-
-    // every 1 ms (1000 Hz)
-    systick_set_frequency(1000, rcc_ahb_frequency);
-    systick_counter_enable();
-    systick_interrupt_enable();
+    clock_setup();
 
     // setup LED pins
     rcc_periph_clock_enable(RCC_GPIOA);

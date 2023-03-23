@@ -1,3 +1,4 @@
+#include <libopencm3/cm3/systick.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/usart.h>
@@ -23,6 +24,18 @@ void uart_setup_platform(void) {
     usart_enable(USART);
 }
 
+void clock_setup_platform(void) {
+    // use external 8MHz crystal to derive 48MHz clock from PLL
+    rcc_clock_setup_in_hse_8mhz_out_48mhz();
+    STK_CVR = 0; // clear systick current value to start immediately
+
+    // every 1 ms (1000 Hz)
+    systick_set_frequency(1000, rcc_ahb_frequency);
+    systick_counter_enable();
+    systick_interrupt_enable();
+}
+
+// TODO: make this uart_send_char_platform() and move uart_send_char into uart.c
 void uart_send_char(char c) {
     usart_send_blocking(USART, c);
 }

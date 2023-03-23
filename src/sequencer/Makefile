@@ -2,7 +2,7 @@ PROJECT = sequencer
 BUILD_DIR = bin
 
 # add project c files that don't need to be tested here
-NO_TEST_CFILES = sequencer.c platform.c
+NO_TEST_CFILES = sequencer.c platform.c clocks.c
 
 # Add project c files that do need to be tested here
 TEST_CFILES = utils.c tempo_and_duty.c uart.c
