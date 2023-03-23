@@ -1,9 +1,12 @@
 #include "utils.h"
+#include "uart.h"
 
 void failed(char *file, int line) {
-    (void *) file;
-    (void) line;
-    while (1) {}; // TODO: file and line to UART
+    uart_send_string("ASSERT FAILED at ");
+    uart_send_string(file);
+    uart_send_string(":");
+    uart_send_number(line); // includes trailing \r\n
+    while (1) {};
 }
 
 uint32_t umax(uint32_t a, uint32_t b) {
