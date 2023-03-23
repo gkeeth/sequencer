@@ -1,5 +1,6 @@
 #include "CppUTest/TestHarness.h"
 #include <cstdint>
+#include <string>
 
 extern "C" {
 #include "uart.h"
@@ -11,6 +12,28 @@ TEST_GROUP(uart_testgroup) {
         init();
     }
 };
+
+TEST(uart_testgroup, send_string) {
+    std::string s = "hello world! 1234567890";
+    uart_send_string(s.c_str());
+    STRCMP_EQUAL(s.c_str(), get_buffer());
+}
+
+TEST(uart_testgroup, send_empty_string) {
+    uart_send_string("");
+    STRCMP_EQUAL("", get_buffer());
+}
+
+TEST(uart_testgroup, send_line) {
+    std::string s = "hello world! 1234567890";
+    uart_send_line(s.c_str());
+    STRCMP_EQUAL(s.append("\r\n").c_str(), get_buffer());
+}
+
+TEST(uart_testgroup, send_empty_line) {
+    uart_send_line("");
+    STRCMP_EQUAL("\r\n", get_buffer());
+}
 
 TEST(uart_testgroup, send_single_digit) {
     uart_send_number(1);
