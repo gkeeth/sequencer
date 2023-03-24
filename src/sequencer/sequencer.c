@@ -16,6 +16,7 @@
 #define PIN_TEMPO GPIO1
 
 
+// TODO: abstract this out into pot driver
 static void adc_setup(void) {
     rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(RCC_ADC);
@@ -51,6 +52,7 @@ static void adc_setup(void) {
 static void setup(void) {
     clock_setup();
 
+    // TODO: abstract this into LED driver
     // setup LED pins
     rcc_periph_clock_enable(RCC_GPIOA);
     // set LED pins to output push-pull
@@ -73,11 +75,13 @@ int main(void) {
     last_adc_millis = millis();
 
     while(1) {
+        // TODO: abstract this out into led driver
         if ((millis() - last_flash_millis) > BLINK_DELAY) {
             gpio_toggle(PORT_LED, PIN_LED);
             last_flash_millis = millis();
         }
 
+        // TODO: abstract this out into pot driver, use averaged values here
         if ((millis() - last_adc_millis) > ADC_DELAY) {
             // trigger and read ADC
             adc_start_conversion_regular(ADC1);
@@ -88,16 +92,7 @@ int main(void) {
             last_adc_millis = millis();
         }
 
-        // echo any input over USART1
-        if (usart_get_flag(USART1, USART_ISR_RXNE)) {
-            // there's a byte to be received
-            char c = usart_recv_blocking(USART1);
-            // echo it back
-            usart_send_blocking(USART1, c);
-            if (c == '\r') {
-                usart_send_blocking(USART1, '\n');
-            }
-        }
+        uart_echo();
     }
 
     return 0;

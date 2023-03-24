@@ -35,7 +35,15 @@ void clock_setup_platform(void) {
     systick_interrupt_enable();
 }
 
-// TODO: make this uart_send_char_platform() and move uart_send_char into uart.c
-void uart_send_char(char c) {
+void uart_send_char_platform(char c) {
     usart_send_blocking(USART, c);
+}
+
+// Check if there is a received char available to be read
+bool uart_check_received_char_platform(void) {
+    return usart_get_flag(USART, USART_ISR_RXNE);
+}
+
+char uart_get_received_char_platform(void) {
+    return usart_recv_blocking(USART);
 }
