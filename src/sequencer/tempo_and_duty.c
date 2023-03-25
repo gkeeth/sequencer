@@ -1,3 +1,4 @@
+#include "platform.h"
 #include "tempo_and_duty.h"
 
 #define TEMPO_READINGS_PER_BLOCK_AVERAGE 16
@@ -12,12 +13,6 @@ struct pot {
 
 static pot_t tempo_pot;
 static pot_t duty_pot;
-
-/*
- * TODO
- * set pot value needs to update block total, num readings, and last average at end of block
- * need to figure out how to read state of opaque pot type in tests
- */
 
 void init_pot(pot_t *pot, uint16_t readings_per_block_average) {
     pot->last_average = 0;
@@ -48,7 +43,6 @@ static void update_value(pot_t *pot, uint16_t reading) {
         pot->running_block_total = 0;
         pot->num_readings = 0;
     }
-
 }
 
 void update_duty_value(uint16_t reading) {
@@ -59,12 +53,27 @@ void update_tempo_value(uint16_t reading) {
     update_value(&tempo_pot, reading);
 }
 
-/*
-void set_pot_value(uint16_t *const pot, const uint16_t pot_value) {
-    *pot = pot_value;
+void adc_setup(void) {
+    adc_setup_platform();
 }
 
-uint16_t get_pot_value(uint16_t *pot) {
-    return *pot;
+/*
+ * reads tempo and duty pot values. Does not update rolling average.
+ */
+void read_tempo_and_duty_raw(uint16_t *tempo, uint16_t *duty) {
+    uint16_t buffer[2];
+    adc_convert_platform(buffer, 2);
+    *tempo = buffer[0];
+    *duty = buffer[1];
 }
-*/
+
+/*
+ * reads tempo and duty pot values, and updates the rolling average calculation.
+ */
+void read_pots(void) {
+    uint16_t tempo;
+    uint16_t duty;
+    read_tempo_and_duty_raw(&tempo, &duty);
+    update_tempo_value(tempo);
+    update_duty_value(duty);
+}
