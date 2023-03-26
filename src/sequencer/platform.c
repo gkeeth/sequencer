@@ -1,10 +1,14 @@
 #include <libopencm3/cm3/systick.h>
+#include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/usart.h>
 #include <libopencm3/stm32/adc.h>
+#include <libopencm3/stm32/timer.h>
 
 #include "platform.h"
+#include "tempo_and_duty.h"
+#include "utils.h"
 
 #define USART USART1
 #define RCC_USART RCC_USART1
@@ -19,6 +23,9 @@
 #define PIN_TEMPO GPIO1
 #define ADC_CHANNEL_DUTY 8
 #define ADC_CHANNEL_TEMPO 9
+#define RCC_ADC_TIMER RCC_TIM3
+#define ADC_TIMER TIM3
+#define ADC_TIMER_TRIGGER ADC_CFGR1_EXTSEL_TIM3_TRGO
 
 void uart_setup_platform(void) {
     rcc_periph_clock_enable(RCC_UART_GPIO);
@@ -76,10 +83,33 @@ void adc_setup_platform(void) {
     // CONT=0
     // DISCEN=0
     adc_set_operation_mode(ADC1, ADC_MODE_SCAN);
-    // for now we only allow software triggers, although it might be better
-    // to use a timer to trigger automatically every e.g. 1ms with:
-    // adc_enable_external_trigger_regular(ADC1, ADC_CFGR1_EXTSEL_TIM15_TRGO, ADC_CFGR1_EXTEN_RISING_EDGE);
-    adc_disable_external_trigger_regular(ADC1);
+
+    // configure TIM3
+    // upcount from 0 to xxx, then generate an overflow event to trigger the ADC
+    // 48MHz system clock
+    // 1kHz desired event rate
+    // prescaler = 0
+    // ARR = 48,000 - 1
+    rcc_periph_clock_enable(RCC_ADC_TIMER);
+    timer_direction_up(ADC_TIMER);
+    // timer_set_prescaler(ADC_TIMER, 100000);
+    timer_set_prescaler(ADC_TIMER, 0);
+    timer_set_period(ADC_TIMER, 48000 - 1);
+    timer_set_master_mode(ADC_TIMER, TIM_CR2_MMS_UPDATE);
+
+    // debug:
+    // nvic_enable_irq(NVIC_TIM3_IRQ);
+    // timer_enable_irq(ADC_TIMER, TIM_DIER_UIE);
+    // rcc_periph_clock_enable(RCC_GPIOA);
+    // gpio_mode_setup(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO12);
+
+    adc_enable_external_trigger_regular(ADC1, ADC_TIMER_TRIGGER, ADC_CFGR1_EXTEN_RISING_EDGE);
+    // adc_disable_external_trigger_regular(ADC1);
+
+    adc_enable_eoc_interrupt(ADC1);
+    adc_enable_overrun_interrupt(ADC1);
+    nvic_enable_irq(NVIC_ADC_COMP_IRQ);
+
     adc_set_right_aligned(ADC1);
     adc_set_sample_time_on_all_channels(ADC1, ADC_SMPTIME_071DOT5);
 
@@ -89,6 +119,8 @@ void adc_setup_platform(void) {
     adc_set_resolution(ADC1, ADC_RESOLUTION_12BIT);
     adc_disable_analog_watchdog(ADC1);
     adc_power_on(ADC1);
+    adc_start_conversion_regular(ADC1); // won't actually start until trigger
+    timer_enable_counter(ADC_TIMER);
 
     // TODO: measure internal reference and calculate VDDA? Probably not
     // necessary; strictly speaking a ratio is all we need.
@@ -105,5 +137,30 @@ void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions) {
     for (uint32_t n = 0; n < num_conversions; ++n) {
         while (!adc_eoc(ADC1));
         buffer[n] = (uint16_t) adc_read_regular(ADC1);
+    }
+}
+
+/*
+ * when each conversion is completed, read the conversion value and update
+ * the block average for the appropriate pot.
+ *
+ * TODO: it would be better if the update_*_value() functions were configurable
+ * callbacks/function pointers.
+ */
+#include "uart.h"
+void adc_comp_isr(void) {
+    if (adc_eoc(ADC1)) {
+        // Theoretically it might be better to recover from overrun (reset the
+        // conversions and start fresh), but it should never happen so it's
+        // better to find out if that assumption is wrong and fix the design
+        ASSERT(!adc_get_overrun_flag(ADC1));
+
+        if (adc_eos(ADC1)) {
+            update_duty_value((uint16_t) adc_read_regular(ADC1));
+            adc_clear_eoc_sequence_flag(ADC1);
+            // uart_send_line("conversion complete");
+        } else {
+            update_tempo_value((uint16_t) adc_read_regular(ADC1));
+        }
     }
 }
