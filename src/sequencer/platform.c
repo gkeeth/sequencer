@@ -147,7 +147,6 @@ void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions) {
  * TODO: it would be better if the update_*_value() functions were configurable
  * callbacks/function pointers.
  */
-#include "uart.h"
 void adc_comp_isr(void) {
     if (adc_eoc(ADC1)) {
         // Theoretically it might be better to recover from overrun (reset the
@@ -158,9 +157,16 @@ void adc_comp_isr(void) {
         if (adc_eos(ADC1)) {
             update_duty_value((uint16_t) adc_read_regular(ADC1));
             adc_clear_eoc_sequence_flag(ADC1);
-            // uart_send_line("conversion complete");
         } else {
             update_tempo_value((uint16_t) adc_read_regular(ADC1));
         }
     }
+}
+
+void failed_platform(char *file, int line) {
+    uart_send_string("ASSERT FAILED at ");
+    uart_send_string(file);
+    uart_send_string(":");
+    uart_send_number(line); // includes trailing \r\n
+    while (1) {};
 }

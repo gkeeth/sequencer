@@ -11,5 +11,6 @@ bool uart_check_received_char_platform(void);
 char uart_get_received_char_platform(void);
 void adc_setup_platform(void);
 void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions);
+void failed_platform(char *file, int line);
 
 #endif // PLATFORM_H
