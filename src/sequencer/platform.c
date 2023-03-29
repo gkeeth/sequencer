@@ -7,6 +7,7 @@
 #include <libopencm3/stm32/timer.h>
 
 #include "platform.h"
+#include "uart.h" // for uart logging in asserts
 #include "tempo_and_duty.h"
 #include "utils.h"
 
@@ -26,6 +27,9 @@
 #define RCC_ADC_TIMER RCC_TIM3
 #define ADC_TIMER TIM3
 #define ADC_TIMER_TRIGGER ADC_CFGR1_EXTSEL_TIM3_TRGO
+
+#define PORT_LED GPIOA
+#define PIN_LED GPIO15
 
 void uart_setup_platform(void) {
     rcc_periph_clock_enable(RCC_UART_GPIO);
@@ -163,6 +167,15 @@ void adc_comp_isr(void) {
     }
 }
 
+void led_setup_platform(void) {
+    rcc_periph_clock_enable(RCC_GPIOA);
+    gpio_mode_setup(PORT_LED, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_LED);
+}
+
+void toggle_board_led_platform(void) {
+    gpio_toggle(PORT_LED, PIN_LED);
+}
+
 void failed_platform(char *file, int line) {
     uart_send_string("ASSERT FAILED at ");
     uart_send_string(file);
@@ -170,3 +183,4 @@ void failed_platform(char *file, int line) {
     uart_send_number(line); // includes trailing \r\n
     while (1) {};
 }
+

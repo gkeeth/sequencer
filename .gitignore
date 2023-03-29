@@ -17,3 +17,5 @@ doc/
 *.o
 *.d
 sequencer_tests
+compile_commands.json
+.ccls

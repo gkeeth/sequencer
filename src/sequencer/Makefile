@@ -5,7 +5,7 @@ BUILD_DIR = bin
 NO_TEST_CFILES = sequencer.c platform.c clocks.c
 
 # Add project c files that do need to be tested here
-TEST_CFILES = utils.c tempo_and_duty.c uart.c switch.c
+TEST_CFILES = utils.c tempo_and_duty.c uart.c switch.c led.c
 
 CFILES = $(NO_TEST_CFILES) $(TEST_CFILES)
 
