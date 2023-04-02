@@ -82,6 +82,11 @@ $(TEST_TARGET):	$(TEST_DEPS)
 test:		$(TEST_TARGET)
 	./$(TEST_TARGET) $(CPPUTEST_FLAGS)
 
+# generate compile_commands.json (for language server)
+.PHONY: compile_commands
+compile_commands:
+	bear -- make --always-make $(TEST_TARGET) $(PROJECT).bin
+
 .PHONY: print_vars
 print_vars:
 	$(info CC: $(CC))
