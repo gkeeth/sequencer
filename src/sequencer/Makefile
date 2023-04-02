@@ -50,19 +50,19 @@ debug:		$(PROJECT).debug
 $(TEST_BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp
 	@printf "  CXX\t$<\n"
 	@mkdir -p $(dir $@)
-	$(Q)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
+	$(Q)$(CXX) $(TEST_CXXFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
 # test fake/mock files
 $(TEST_BUILD_DIR)/%.o: $(MOCKS_DIR)/%.c
 	@printf "  CC\t$<\n"
 	@mkdir -p $(dir $@)
-	$(Q)$(TEST_CC) $(CFLAGS) $(CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
+	$(Q)$(TEST_CC) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
 # source files
 $(TEST_BUILD_DIR)/%.o: %.c
 	@printf "  CC\t$<\n"
 	@mkdir -p $(dir $@)
-	$(Q)$(TEST_CC) $(CFLAGS) $(CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
+	$(Q)$(TEST_CC) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
 # TODO: may need to add libs and ldscript here, not sure yet
 TEST_DEPS = $(TEST_OBJS) $(TEST_CFILE_OBJS) $(MOCKS_OBJS)

@@ -1,5 +1,3 @@
-#include <libopencm3/stm32/gpio.h>
-#include <libopencm3/stm32/rcc.h>
 #include "platform.h"
 #include "led.h"
 

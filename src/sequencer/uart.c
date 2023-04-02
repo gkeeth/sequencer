@@ -1,4 +1,3 @@
-#include <libopencm3/stm32/usart.h>
 #include "uart.h"
 #include "platform.h"
 
