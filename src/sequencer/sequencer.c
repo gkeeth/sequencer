@@ -15,7 +15,7 @@ static void setup(void) {
     adc_setup();
     init_pots();
     pwm_setup();
-    pwm_set_duty_cycle(20);
+    pwm_set_clock_duty_cycle(20);
 }
 
 

@@ -31,14 +31,26 @@
 #define ADC_TIMER TIM3
 #define ADC_TIMER_TRIGGER ADC_CFGR1_EXTSEL_TIM3_TRGO
 
-#define PORT_LED GPIOA
-#define PIN_LED GPIO15
+#define PORT_STATUS_LED GPIOA
+#define PIN_STATUS_LED GPIO15
+#define RCC_STATUS_LED_GPIO RCC_GPIOA
+#define PORT_LEDS GPIOB
+#define PIN_LEDS GPIO3
+#define LEDS_TIMER TIM2
+#define LEDS_TIM_OC TIM_OC2
+#define LEDS_GPIO_AF GPIO_AF2
+#define RCC_LEDS_GPIO RCC_GPIOB
+#define RCC_LEDS_TIMER RCC_TIM2
+// TODO: calculate this based on led protocol
+#define LED_FREQ_HZ 10000
 
 #define RCC_SEQCLKOUT_GPIO RCC_GPIOA
 #define RCC_SEQCLKOUT_TIMER RCC_TIM1
 #define PORT_SEQCLKOUT GPIOA
 #define PIN_SEQCLKOUT GPIO11
 #define SEQCLKOUT_TIMER TIM1
+#define SEQCLKOUT_TIM_OC TIM_OC4
+#define SEQCLKOUT_GPIO_AF GPIO_AF2
 #define SEQCLKOUT_FREQ_HZ 1000
 
 void uart_setup_platform(void) {
@@ -178,23 +190,76 @@ void adc_comp_isr(void) {
 }
 
 void led_setup_platform(void) {
-    rcc_periph_clock_enable(RCC_GPIOA);
-    gpio_mode_setup(PORT_LED, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_LED);
+    rcc_periph_clock_enable(RCC_STATUS_LED_GPIO);
+    gpio_mode_setup(PORT_STATUS_LED, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_STATUS_LED);
 }
 
 void toggle_board_led_platform(void) {
-    gpio_toggle(PORT_LED, PIN_LED);
+    gpio_toggle(PORT_STATUS_LED, PIN_STATUS_LED);
 }
 
-void pwm_setup_platform(void) {
-    // for debug, use the timer allocated for sequencer clock generation
-    // PA11, TIM1_CH4
-    rcc_periph_clock_enable(RCC_SEQCLKOUT_TIMER);
-    rcc_periph_clock_enable(RCC_SEQCLKOUT_GPIO);
-    gpio_mode_setup(PORT_SEQCLKOUT, GPIO_MODE_AF, GPIO_PUPD_NONE, PIN_SEQCLKOUT);
-    gpio_set_af(PORT_SEQCLKOUT, GPIO_AF2, PIN_SEQCLKOUT);
+static bool pwm_allowed_timer(uint32_t timer_peripheral) {
+    return timer_peripheral == SEQCLKOUT_TIMER || timer_peripheral == LEDS_TIMER;
+}
 
-    timer_direction_up(SEQCLKOUT_TIMER);
+static void pwm_set_single_timer_duty(uint32_t timer_peripheral, uint32_t duty) {
+    ASSERT(duty <= 100);
+    ASSERT(pwm_allowed_timer(timer_peripheral));
+
+    // CCR = (ARR + 1) * (duty fraction)
+    uint32_t value;
+    uint32_t timer_output_channel;
+    if (timer_peripheral == SEQCLKOUT_TIMER) {
+        value = (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ);
+        timer_output_channel = SEQCLKOUT_TIM_OC;
+    } else {
+        value = (SYSCLK_FREQ_HZ / LED_FREQ_HZ);
+        timer_output_channel = LEDS_TIM_OC;
+    }
+    timer_set_oc_value(timer_peripheral, timer_output_channel, value * duty / 100);
+}
+
+/*
+ * set up a single timer for PWM.
+ *
+ * - timer_peripheral can be either SEQCLKOUT_TIMER or LEDS_TIMER
+ * - frequency is specified in hertz
+ * - duty is a percentage (i.e. 0-100)
+ *
+ * TODO: it doesn't make a ton of sense to specify freq as an argument here but not in the set_duty_cycle func
+ */
+static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t frequency_hz, uint32_t duty) {
+    ASSERT(pwm_allowed_timer(timer_peripheral));
+
+    uint32_t timer_rcc;
+    uint32_t gpio_rcc;
+    uint32_t port;
+    uint32_t pin;
+    uint32_t alternate_function;
+    uint32_t timer_output_channel;
+
+    if (timer_peripheral == SEQCLKOUT_TIMER) {
+        timer_rcc = RCC_SEQCLKOUT_TIMER;
+        gpio_rcc = RCC_SEQCLKOUT_GPIO;
+        port = PORT_SEQCLKOUT;
+        pin = PIN_SEQCLKOUT;
+        alternate_function = SEQCLKOUT_GPIO_AF;
+        timer_output_channel = SEQCLKOUT_TIM_OC;
+    } else { // timer_peripheral == LEDS_TIMER
+        timer_rcc = RCC_LEDS_TIMER;
+        gpio_rcc = RCC_LEDS_GPIO;
+        port = PORT_LEDS;
+        pin = PIN_LEDS;
+        alternate_function = LEDS_GPIO_AF;
+        timer_output_channel = LEDS_TIM_OC;
+    }
+
+    rcc_periph_clock_enable(timer_rcc);
+    rcc_periph_clock_enable(gpio_rcc);
+    gpio_mode_setup(port, GPIO_MODE_AF, GPIO_PUPD_NONE, pin);
+    gpio_set_af(port, alternate_function, pin);
+
+    timer_direction_up(timer_peripheral);
     /*
      * settings for initial bringup:
      * 1kHz frequency, 20% duty cycle
@@ -203,33 +268,41 @@ void pwm_setup_platform(void) {
      *   period: 1ms
      *   sysclk = 48MHz
      */
-    timer_set_prescaler(SEQCLKOUT_TIMER, 0);
-    timer_set_period(SEQCLKOUT_TIMER, (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ) - 1);
+    timer_set_prescaler(timer_peripheral, 0);
+    timer_set_period(timer_peripheral, (SYSCLK_FREQ_HZ / frequency_hz) - 1);
     // PWM1: output is active when counter < compare register
     // PWM2: output is inactive when counter < compare register
-    timer_set_oc_mode(SEQCLKOUT_TIMER, TIM_OC4, TIM_OCM_PWM2);
+    timer_set_oc_mode(timer_peripheral, timer_output_channel, TIM_OCM_PWM1);
     // set OCxPE bit in TIMx_CCMRx
-    timer_enable_oc_preload(SEQCLKOUT_TIMER, TIM_OC4);
+    timer_enable_oc_preload(timer_peripheral, timer_output_channel);
     // TODO: set set ARPE in CR1 register to enable auto-reload preload register?
     // set or clear CCxP bit in CCER
-    timer_set_oc_polarity_low(SEQCLKOUT_TIMER, TIM_OC4);
-    // timer_set_oc_polarity_high(SEQCLKOUT_TIMER, TIM_OC4);
+    timer_set_oc_polarity_high(timer_peripheral, timer_output_channel);
     // set CCxE bit in TIMx_CCER
-    timer_enable_oc_output(SEQCLKOUT_TIMER, TIM_OC4);
-    // advanced control timers (TIM1) additionally need to enable *all* outputs
-    timer_enable_break_main_output(SEQCLKOUT_TIMER);
+    timer_enable_oc_output(timer_peripheral, timer_output_channel);
+    if (timer_peripheral == TIM1) {
+        // advanced control timers (TIM1) additionally need to enable *all* outputs
+        timer_enable_break_main_output(timer_peripheral);
+    }
     // initialize all registers by triggering an UG event
-    timer_generate_event(SEQCLKOUT_TIMER, TIM_EGR_UG);
+    timer_generate_event(timer_peripheral, TIM_EGR_UG);
 
-    timer_enable_counter(SEQCLKOUT_TIMER);
+    timer_enable_counter(timer_peripheral);
+
+    pwm_set_single_timer_duty(timer_peripheral, duty);
 }
 
-void pwm_set_duty_cycle_platform(uint32_t duty) {
-    ASSERT(duty <= 100);
+void pwm_setup_platform(void) {
+    pwm_setup_single_timer(SEQCLKOUT_TIMER, SEQCLKOUT_FREQ_HZ, 20);
+    pwm_setup_single_timer(LEDS_TIMER, LED_FREQ_HZ, 80);
+}
 
-    // CCR = (ARR + 1) * (duty fraction)
-    uint32_t value = (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ) * duty / 100;
-    timer_set_oc_value(SEQCLKOUT_TIMER, TIM_OC4, value);
+void pwm_set_leds_duty_platform(uint32_t duty) {
+    pwm_set_single_timer_duty(LEDS_TIMER, duty);
+}
+
+void pwm_set_clock_duty_platform(uint32_t duty) {
+    pwm_set_single_timer_duty(SEQCLKOUT_TIMER, duty);
 }
 
 void failed_platform(char *file, int line) {

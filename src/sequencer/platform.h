@@ -18,7 +18,8 @@ void led_setup_platform(void);
 void toggle_board_led_platform(void);
 
 void pwm_setup_platform(void);
-void pwm_set_duty_cycle_platform(uint32_t duty);
+void pwm_set_leds_duty_platform(uint32_t duty);
+void pwm_set_clock_duty_platform(uint32_t duty);
 
 void failed_platform(char *file, int line);
 
