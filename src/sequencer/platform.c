@@ -11,6 +11,9 @@
 #include "tempo_and_duty.h"
 #include "utils.h"
 
+#define SYSCLK_FREQ_MHZ 48
+#define SYSCLK_FREQ_HZ (SYSCLK_FREQ_MHZ * 1000000)
+
 #define USART USART1
 #define RCC_USART RCC_USART1
 #define RCC_UART_GPIO RCC_GPIOA
@@ -30,6 +33,13 @@
 
 #define PORT_LED GPIOA
 #define PIN_LED GPIO15
+
+#define RCC_SEQCLKOUT_GPIO RCC_GPIOA
+#define RCC_SEQCLKOUT_TIMER RCC_TIM1
+#define PORT_SEQCLKOUT GPIOA
+#define PIN_SEQCLKOUT GPIO11
+#define SEQCLKOUT_TIMER TIM1
+#define SEQCLKOUT_FREQ_HZ 1000
 
 void uart_setup_platform(void) {
     rcc_periph_clock_enable(RCC_UART_GPIO);
@@ -96,9 +106,9 @@ void adc_setup_platform(void) {
     // ARR = 48,000 - 1
     rcc_periph_clock_enable(RCC_ADC_TIMER);
     timer_direction_up(ADC_TIMER);
-    // timer_set_prescaler(ADC_TIMER, 100000);
     timer_set_prescaler(ADC_TIMER, 0);
-    timer_set_period(ADC_TIMER, 48000 - 1);
+    // timer_set_period(ADC_TIMER, 48000 - 1);
+    timer_set_period(ADC_TIMER, (SYSCLK_FREQ_HZ / 1000) - 1);
     timer_set_master_mode(ADC_TIMER, TIM_CR2_MMS_UPDATE);
 
     // debug:
@@ -174,6 +184,78 @@ void led_setup_platform(void) {
 
 void toggle_board_led_platform(void) {
     gpio_toggle(PORT_LED, PIN_LED);
+}
+
+void pwm_setup_platform(void) {
+    // for debug, use the timer allocated for sequencer clock generation
+    // PA11, TIM1_CH4
+    rcc_periph_clock_enable(RCC_SEQCLKOUT_TIMER);
+    rcc_periph_clock_enable(RCC_SEQCLKOUT_GPIO);
+
+#if 1
+    gpio_mode_setup(PORT_SEQCLKOUT, GPIO_MODE_AF, GPIO_PUPD_NONE, PIN_SEQCLKOUT);
+    gpio_set_af(PORT_SEQCLKOUT, GPIO_AF2, PIN_SEQCLKOUT);
+#else
+    // for debug - both update and CC4 events fire, so capture/compare is working
+    // output works fine, the issue seems to be with the output channel
+    // controlling the gpio?
+    // try forcing the output with CCxS = 00 (forced output mode)
+    gpio_mode_setup(PORT_SEQCLKOUT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_SEQCLKOUT);
+    nvic_enable_irq(NVIC_TIM1_CC_IRQ);
+    nvic_enable_irq(NVIC_TIM1_BRK_UP_TRG_COM_IRQ);
+    timer_enable_irq(SEQCLKOUT_TIMER, TIM_DIER_UIE);
+    timer_enable_irq(SEQCLKOUT_TIMER, TIM_DIER_CC4IE);
+#endif
+
+    timer_direction_up(SEQCLKOUT_TIMER);
+    /*
+     * settings for initial bringup:
+     * 1kHz frequency, 20% duty cycle
+     * prescaler: 0
+     * ARR = sysclk * period - 1 = 48,000 - 1
+     *   period: 1ms
+     *   sysclk = 48MHz
+     */
+    timer_set_prescaler(SEQCLKOUT_TIMER, 0);
+    timer_set_period(SEQCLKOUT_TIMER, (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ) - 1);
+    // PWM1: output is active when counter < compare register
+    // PWM2: output is inactive when counter < compare register
+    timer_set_oc_mode(SEQCLKOUT_TIMER, TIM_OC4, TIM_OCM_PWM2);
+    // set OCxPE bit in TIMx_CCMRx
+    timer_enable_oc_preload(SEQCLKOUT_TIMER, TIM_OC4);
+    // TODO: set set ARPE in CR1 register to enable auto-reload preload register?
+    // set or clear CCxP bit in CCER
+    timer_set_oc_polarity_low(SEQCLKOUT_TIMER, TIM_OC4);
+    // timer_set_oc_polarity_high(SEQCLKOUT_TIMER, TIM_OC4);
+    // set CCxE bit in TIMx_CCER
+    timer_enable_oc_output(SEQCLKOUT_TIMER, TIM_OC4);
+    // advanced control timers (TIM1) additionally need to enable *all* outputs
+    timer_enable_break_main_output(SEQCLKOUT_TIMER);
+    // initialize all registers by triggering an UG event
+    timer_generate_event(SEQCLKOUT_TIMER, TIM_EGR_UG);
+
+    timer_enable_counter(SEQCLKOUT_TIMER);
+}
+
+void pwm_set_duty_cycle_platform(uint32_t duty) {
+    ASSERT(duty <= 100);
+
+    // CCR = (ARR + 1) * (duty fraction)
+    uint32_t value = (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ) * duty / 100;
+    timer_set_oc_value(SEQCLKOUT_TIMER, TIM_OC4, value);
+}
+
+
+void tim1_brk_up_trg_com_isr(void) {
+    // uart_send_line("u");
+    gpio_set(PORT_SEQCLKOUT, PIN_SEQCLKOUT);
+    timer_clear_flag(SEQCLKOUT_TIMER, TIM_SR_UIF);
+}
+
+void tim1_cc_isr(void) {
+    // uart_send_line("c");
+    gpio_clear(PORT_SEQCLKOUT, PIN_SEQCLKOUT);
+    timer_clear_flag(SEQCLKOUT_TIMER, TIM_SR_CC4IF);
 }
 
 void failed_platform(char *file, int line) {

@@ -4,6 +4,7 @@
 #include "led.h"
 #include "uart.h"
 #include "tempo_and_duty.h"
+#include "pwm.h"
 #include "utils.h"
 
 static void setup(void) {
@@ -13,6 +14,8 @@ static void setup(void) {
     uart_setup();
     adc_setup();
     init_pots();
+    pwm_setup();
+    pwm_set_duty_cycle(20);
 }
 
 
