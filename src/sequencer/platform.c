@@ -8,7 +8,7 @@
 
 #include "platform.h"
 #include "uart.h" // for uart logging in asserts
-#include "tempo_and_duty.h"
+#include "tempo_and_duty.h" // for updating pot values in ADC ISR
 #include "utils.h"
 
 #define SYSCLK_FREQ_MHZ 48
@@ -191,21 +191,8 @@ void pwm_setup_platform(void) {
     // PA11, TIM1_CH4
     rcc_periph_clock_enable(RCC_SEQCLKOUT_TIMER);
     rcc_periph_clock_enable(RCC_SEQCLKOUT_GPIO);
-
-#if 1
     gpio_mode_setup(PORT_SEQCLKOUT, GPIO_MODE_AF, GPIO_PUPD_NONE, PIN_SEQCLKOUT);
     gpio_set_af(PORT_SEQCLKOUT, GPIO_AF2, PIN_SEQCLKOUT);
-#else
-    // for debug - both update and CC4 events fire, so capture/compare is working
-    // output works fine, the issue seems to be with the output channel
-    // controlling the gpio?
-    // try forcing the output with CCxS = 00 (forced output mode)
-    gpio_mode_setup(PORT_SEQCLKOUT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_SEQCLKOUT);
-    nvic_enable_irq(NVIC_TIM1_CC_IRQ);
-    nvic_enable_irq(NVIC_TIM1_BRK_UP_TRG_COM_IRQ);
-    timer_enable_irq(SEQCLKOUT_TIMER, TIM_DIER_UIE);
-    timer_enable_irq(SEQCLKOUT_TIMER, TIM_DIER_CC4IE);
-#endif
 
     timer_direction_up(SEQCLKOUT_TIMER);
     /*
@@ -243,19 +230,6 @@ void pwm_set_duty_cycle_platform(uint32_t duty) {
     // CCR = (ARR + 1) * (duty fraction)
     uint32_t value = (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ) * duty / 100;
     timer_set_oc_value(SEQCLKOUT_TIMER, TIM_OC4, value);
-}
-
-
-void tim1_brk_up_trg_com_isr(void) {
-    // uart_send_line("u");
-    gpio_set(PORT_SEQCLKOUT, PIN_SEQCLKOUT);
-    timer_clear_flag(SEQCLKOUT_TIMER, TIM_SR_UIF);
-}
-
-void tim1_cc_isr(void) {
-    // uart_send_line("c");
-    gpio_clear(PORT_SEQCLKOUT, PIN_SEQCLKOUT);
-    timer_clear_flag(SEQCLKOUT_TIMER, TIM_SR_CC4IF);
 }
 
 void failed_platform(char *file, int line) {
