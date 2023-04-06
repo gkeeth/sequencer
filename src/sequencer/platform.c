@@ -216,6 +216,10 @@ static void pwm_set_single_timer_duty(uint32_t timer_peripheral, uint32_t duty) 
         value = (SYSCLK_FREQ_HZ / LED_FREQ_HZ);
         timer_output_channel = LEDS_TIM_OC;
     }
+
+    // prevent overflow
+    ASSERT(value <= UINT32_MAX / 100);
+
     timer_set_oc_value(timer_peripheral, timer_output_channel, value * duty / 100);
 }
 
