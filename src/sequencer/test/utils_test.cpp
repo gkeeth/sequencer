@@ -36,47 +36,47 @@ TEST(utils_testgroup, unsigned_min) {
 }
 
 TEST(utils_testgroup, umap_same_range) {
-    CHECK_EQUAL(0, umap(0, 0, 10, 0, 10));
-    CHECK_EQUAL(10, umap(10, 0, 10, 0, 10));
-    CHECK_EQUAL(5, umap(5, 0, 10, 0, 10));
+    CHECK_EQUAL(0, umap_range(0, 0, 10, 0, 10));
+    CHECK_EQUAL(10, umap_range(10, 0, 10, 0, 10));
+    CHECK_EQUAL(5, umap_range(5, 0, 10, 0, 10));
 }
 
 TEST(utils_testgroup, umap_smaller_range) {
-    CHECK_EQUAL(0, umap(0, 0, 12, 0, 10));
-    CHECK_EQUAL(10, umap(12, 0, 12, 0, 10));
-    CHECK_EQUAL(5, umap(6, 0, 12, 0, 10));
+    CHECK_EQUAL(0, umap_range(0, 0, 12, 0, 10));
+    CHECK_EQUAL(10, umap_range(12, 0, 12, 0, 10));
+    CHECK_EQUAL(5, umap_range(6, 0, 12, 0, 10));
 }
 
 TEST(utils_testgroup, umap_larger_range) {
-    CHECK_EQUAL(0, umap(0, 0, 10, 0, 12));
-    CHECK_EQUAL(12, umap(10, 0, 10, 0, 12));
-    CHECK_EQUAL(6, umap(5, 0, 10, 0, 12));
+    CHECK_EQUAL(0, umap_range(0, 0, 10, 0, 12));
+    CHECK_EQUAL(12, umap_range(10, 0, 10, 0, 12));
+    CHECK_EQUAL(6, umap_range(5, 0, 10, 0, 12));
 }
 
 TEST(utils_testgroup, map_same_range) {
-    CHECK_EQUAL(-5, map(-5, -5, 5, -5, 5));
-    CHECK_EQUAL(0, map(0, -5, 5, -5, 5));
-    CHECK_EQUAL(5, map(5, -5, 5, -5, 5));
+    CHECK_EQUAL(-5, map_range(-5, -5, 5, -5, 5));
+    CHECK_EQUAL(0, map_range(0, -5, 5, -5, 5));
+    CHECK_EQUAL(5, map_range(5, -5, 5, -5, 5));
 }
 
 TEST(utils_testgroup, map_smaller_range) {
-    CHECK_EQUAL(-1, map(-5, -5, 5, -1, 1));
-    CHECK_EQUAL(0, map(0, -5, 5, -1, 1));
-    CHECK_EQUAL(1, map(5, -5, 5, -1, 1));
+    CHECK_EQUAL(-1, map_range(-5, -5, 5, -1, 1));
+    CHECK_EQUAL(0, map_range(0, -5, 5, -1, 1));
+    CHECK_EQUAL(1, map_range(5, -5, 5, -1, 1));
 }
 
 TEST(utils_testgroup, map_larger_range) {
-    CHECK_EQUAL(-5, map(-1, -1, 1, -5, 5));
-    CHECK_EQUAL(0, map(0, -1, 1, -5, 5));
-    CHECK_EQUAL(5, map(1, -1, 1, -5, 5));
+    CHECK_EQUAL(-5, map_range(-1, -1, 1, -5, 5));
+    CHECK_EQUAL(0, map_range(0, -1, 1, -5, 5));
+    CHECK_EQUAL(5, map_range(1, -1, 1, -5, 5));
 }
 
 TEST(utils_testgroup, map_reversed_range) {
-    CHECK_EQUAL(-5, map(1, -1, 1, 5, -5));
-    CHECK_EQUAL(0, map(0, -1, 1, 5, -5));
-    CHECK_EQUAL(5, map(-1, -1, 1, 5, -5));
+    CHECK_EQUAL(-5, map_range(1, -1, 1, 5, -5));
+    CHECK_EQUAL(0, map_range(0, -1, 1, 5, -5));
+    CHECK_EQUAL(5, map_range(-1, -1, 1, 5, -5));
 
-    CHECK_EQUAL(-5, map(1, 1, -1, -5, 5));
-    CHECK_EQUAL(0, map(0, 1, -1, -5, 5));
-    CHECK_EQUAL(5, map(-1, 1, -1, -5, 5));
+    CHECK_EQUAL(-5, map_range(1, 1, -1, -5, 5));
+    CHECK_EQUAL(0, map_range(0, 1, -1, -5, 5));
+    CHECK_EQUAL(5, map_range(-1, 1, -1, -5, 5));
 }

@@ -34,7 +34,7 @@ int main(void) {
             last_flash_millis = millis();
         }
 
-        uint32_t duty_percent = umap(get_duty(), 0, 4095, 5, 95);
+        uint32_t duty_percent = umap_range(get_duty(), 0, 4095, 5, 95);
         if ((millis() - last_adc_print_millis) > ADC_PRINT_DELAY) {
             uart_send_string("tempo: ");
             uart_send_number(get_tempo());
