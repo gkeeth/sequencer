@@ -6,19 +6,21 @@ void pwm_setup(void) {
 }
 
 /*
- * set PWM duty cycle for RGB LEDs
+ * set PWM frequency and duty cycle for RGB LEDs
  *
- * - duty: duty cycle as a percentage (e.g. 50)
+ * - PWM frequency in hertz
+ * - duty: PWM duty cycle as a percentage (e.g. 50)
  */
-void pwm_set_leds_duty_cycle(uint32_t duty) {
-    pwm_set_leds_duty_platform(duty);
+void pwm_set_leds_period_and_duty(uint32_t frequency, uint32_t duty) {
+    pwm_set_leds_period_and_duty_platform(frequency, duty);
 }
 
 /*
- * set PWM duty cycle for sequencer clock
+ * set PWM period and duty cycle for sequencer clock
  *
- * - duty: duty cycle as a percentage (e.g. 50)
+ * - period_ms: PWM period in milliseconds
+ * - duty: PWM duty cycle as a percentage (e.g. 50)
  */
-void pwm_set_clock_duty_cycle(uint32_t duty) {
-    pwm_set_clock_duty_platform(duty);
+void pwm_set_clock_period_and_duty(uint32_t period_ms, uint32_t duty) {
+    pwm_set_clock_period_and_duty_platform(period_ms, duty);
 }

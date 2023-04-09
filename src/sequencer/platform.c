@@ -11,8 +11,8 @@
 #include "tempo_and_duty.h" // for updating pot values in ADC ISR
 #include "utils.h"
 
-#define SYSCLK_FREQ_MHZ 48
-#define SYSCLK_FREQ_HZ (SYSCLK_FREQ_MHZ * 1000000)
+#define SYSCLK_FREQ_MHZ 48U
+#define SYSCLK_FREQ_HZ (SYSCLK_FREQ_MHZ * 1000000U)
 
 #define USART USART1
 #define RCC_USART RCC_USART1
@@ -30,6 +30,7 @@
 #define RCC_ADC_TIMER RCC_TIM3
 #define ADC_TIMER TIM3
 #define ADC_TIMER_TRIGGER ADC_CFGR1_EXTSEL_TIM3_TRGO
+#define ADC_TRIGGER_RATE_HZ 1000
 
 #define PORT_STATUS_LED GPIOA
 #define PIN_STATUS_LED GPIO15
@@ -52,6 +53,20 @@
 #define SEQCLKOUT_TIM_OC TIM_OC4
 #define SEQCLKOUT_GPIO_AF GPIO_AF2
 #define SEQCLKOUT_FREQ_HZ 1000
+
+/*
+ * convert period in milliseconds to a value for a timer's ARR register,
+ * including the -1 offset.
+ */
+static uint16_t timer_ms_to_arr(uint32_t period_ms) {
+    // ASSERT(UINT32_MAX / 1000 / SYSCLK_FREQ_MHZ > period_ms);
+    return (SYSCLK_FREQ_MHZ * period_ms * 1000) - 1;
+}
+
+static uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
+    ASSERT(frequency_hz != 0);
+    return (SYSCLK_FREQ_MHZ / frequency_hz) - 1;
+}
 
 void uart_setup_platform(void) {
     rcc_periph_clock_enable(RCC_UART_GPIO);
@@ -110,17 +125,11 @@ void adc_setup_platform(void) {
     // DISCEN=0
     adc_set_operation_mode(ADC1, ADC_MODE_SCAN);
 
-    // configure TIM3
-    // upcount from 0 to xxx, then generate an overflow event to trigger the ADC
-    // 48MHz system clock
-    // 1kHz desired event rate
-    // prescaler = 0
-    // ARR = 48,000 - 1
+    // configure timer to trigger ADC
     rcc_periph_clock_enable(RCC_ADC_TIMER);
     timer_direction_up(ADC_TIMER);
     timer_set_prescaler(ADC_TIMER, 0);
-    // timer_set_period(ADC_TIMER, 48000 - 1);
-    timer_set_period(ADC_TIMER, (SYSCLK_FREQ_HZ / 1000) - 1);
+    timer_set_period(ADC_TIMER, timer_hz_to_arr(ADC_TRIGGER_RATE_HZ));
     timer_set_master_mode(ADC_TIMER, TIM_CR2_MMS_UPDATE);
 
     // debug:
@@ -202,37 +211,54 @@ static bool pwm_allowed_timer(uint32_t timer_peripheral) {
     return timer_peripheral == SEQCLKOUT_TIMER || timer_peripheral == LEDS_TIMER;
 }
 
-static void pwm_set_single_timer_duty(uint32_t timer_peripheral, uint32_t duty) {
-    ASSERT(duty <= 100);
+
+/*
+ * set PWM period (ARR) and duty cycle (CCR) for a single timer and output channel.
+ * Output channels are hardcoded by SEQCLKOUT_TIM_OC and LEDS_TIM_OC defines.
+ * TODO: parameterize the output channels.
+ *
+ * - timer_peripheral: libopencm3 timer peripheral, e.g. TIM1
+ * - period_ms: PWM period in milliseconds
+ * - duty: PWM duty cycle as a percent
+ */
+static void pwm_set_single_timer_platform(uint32_t timer_peripheral, uint32_t period_ms, uint32_t duty) {
+    ASSERT(duty <= 100); // prevent overflow
     ASSERT(pwm_allowed_timer(timer_peripheral));
 
     // CCR = (ARR + 1) * (duty fraction)
-    uint32_t value;
+    // uint32_t value;
     uint32_t timer_output_channel;
     if (timer_peripheral == SEQCLKOUT_TIMER) {
-        value = (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ);
+        // value = (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ);
         timer_output_channel = SEQCLKOUT_TIM_OC;
     } else {
-        value = (SYSCLK_FREQ_HZ / LED_FREQ_HZ);
+        // value = (SYSCLK_FREQ_HZ / LED_FREQ_HZ);
         timer_output_channel = LEDS_TIM_OC;
     }
 
-    // prevent overflow
-    ASSERT(value <= UINT32_MAX / 100);
+    uint32_t arr = timer_ms_to_arr(period_ms);
+    uint32_t ccr = ((arr + 1) * duty / 100) - 1;
 
-    timer_set_oc_value(timer_peripheral, timer_output_channel, value * duty / 100);
+
+    // prevent overflow
+    // ASSERT(value <= UINT32_MAX / 100);
+    ASSERT(arr <= UINT32_MAX / 100);
+
+    // TODO: use timer_set_prescaler(timer_peripheral, psc);
+    timer_set_period(timer_peripheral, arr);
+    timer_set_oc_value(timer_peripheral, timer_output_channel, ccr);
 }
 
 /*
  * set up a single timer for PWM.
  *
- * - timer_peripheral can be either SEQCLKOUT_TIMER or LEDS_TIMER
- * - frequency is specified in hertz
- * - duty is a percentage (i.e. 0-100)
+ * - timer_peripheral: timer to configure; can be either SEQCLKOUT_TIMER or LEDS_TIMER
+ * - period_ms: PWM period in milliseconds
+ * - duty: PWM duty cycle as a percentage (i.e. 0-100)
  *
  * TODO: it doesn't make a ton of sense to specify freq as an argument here but not in the set_duty_cycle func
  */
-static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t frequency_hz, uint32_t duty) {
+static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period_ms, uint32_t duty) {
     ASSERT(pwm_allowed_timer(timer_peripheral));
 
     uint32_t timer_rcc;
@@ -272,8 +298,9 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t frequency
      *   period: 1ms
      *   sysclk = 48MHz
      */
+    // TODO: prescale the sequencer clock to avoid overflow in the ARR register
     timer_set_prescaler(timer_peripheral, 0);
-    timer_set_period(timer_peripheral, (SYSCLK_FREQ_HZ / frequency_hz) - 1);
+    timer_set_period(timer_peripheral, timer_ms_to_arr(period_ms));
     // PWM1: output is active when counter < compare register
     // PWM2: output is inactive when counter < compare register
     timer_set_oc_mode(timer_peripheral, timer_output_channel, TIM_OCM_PWM1);
@@ -293,21 +320,47 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t frequency
 
     timer_enable_counter(timer_peripheral);
 
-    pwm_set_single_timer_duty(timer_peripheral, duty);
+    pwm_set_single_timer_platform(timer_peripheral, period_ms, duty);
 }
 
 void pwm_setup_platform(void) {
-    pwm_setup_single_timer(SEQCLKOUT_TIMER, SEQCLKOUT_FREQ_HZ, 20);
-    pwm_setup_single_timer(LEDS_TIMER, LED_FREQ_HZ, 80);
+    pwm_setup_single_timer(SEQCLKOUT_TIMER, SEQCLKOUT_FREQ_HZ * 10, 20);
+    pwm_setup_single_timer(LEDS_TIMER, LED_FREQ_HZ * 10, 80);
 }
 
-void pwm_set_leds_duty_platform(uint32_t duty) {
-    pwm_set_single_timer_duty(LEDS_TIMER, duty);
+/*
+ * set the PWM period and duty cycle for the step LED control timer
+ *
+ * - period_ms: PWM period in milliseconds
+ * - duty: PWM duty cycle as a percent (e.g. 50)
+ */
+void pwm_set_leds_period_and_duty_platform(uint32_t period_ms, uint32_t duty) {
+    pwm_set_single_timer_platform(LEDS_TIMER, period_ms, duty);
 }
 
-void pwm_set_clock_duty_platform(uint32_t duty) {
-    pwm_set_single_timer_duty(SEQCLKOUT_TIMER, duty);
+/*
+ * set the PWM period and duty cycle for the generated sequencer clock
+ *
+ * - period_ms: PWM period in milliseconds
+ * - duty: PWM duty cycle as a percent (e.g. 50)
+ */
+void pwm_set_clock_period_and_duty_platform(uint32_t period_ms, uint32_t duty) {
+    pwm_set_single_timer_platform(SEQCLKOUT_TIMER, period_ms, duty);
 }
+
+#if 0
+void set_tempo_platform(uint32_t tempo) {
+    ASSERT(UINT32_MAX / 60 > SYSCLK_FREQ_HZ);
+    // update internal tempo variable, if any
+    // update timer period register
+    // also update timer compare register according to new period, so that PWM
+    // duty stays the same overall
+    // TODO: switch to using timer_ns_to_arr()?
+    uint32_t timer_period = SYSCLK_FREQ_HZ * 60 / tempo;
+    // uint32_t pwm_compare = get_duty
+    timer_set_period(SEQCLKOUT_TIMER, timer_period);
+}
+#endif
 
 void failed_platform(char *file, int line) {
     uart_send_string("ASSERT FAILED at ");
@@ -316,4 +369,3 @@ void failed_platform(char *file, int line) {
     uart_send_number(line); // includes trailing \r\n
     while (1) {};
 }
-

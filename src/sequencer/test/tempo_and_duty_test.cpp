@@ -28,15 +28,15 @@ TEST_GROUP(tempo_and_duty_testgroup) {
         for (int i = 0; i < block_size - 1; i++) {
             update_duty_value(i * 1000);
             update_tempo_value(i * 1000);
-            CHECK_EQUAL(expected_average, get_duty());
-            CHECK_EQUAL(expected_average, get_tempo());
+            CHECK_EQUAL(expected_average, get_duty_pot_value());
+            CHECK_EQUAL(expected_average, get_tempo_pot_value());
         }
     }
 };
 
 TEST(tempo_and_duty_testgroup, pot_values_initially_zero) {
-    CHECK_EQUAL(0, get_duty());
-    CHECK_EQUAL(0, get_tempo());
+    CHECK_EQUAL(0, get_duty_pot_value());
+    CHECK_EQUAL(0, get_tempo_pot_value());
 }
 
 TEST(tempo_and_duty_testgroup, block_average_correct) {
@@ -50,7 +50,7 @@ TEST(tempo_and_duty_testgroup, no_overflow) {
     for (int i = 0; i < 16; i++) {
         update_duty_value(UINT16_MAX);
     }
-    CHECK_EQUAL(UINT16_MAX, get_duty());
+    CHECK_EQUAL(UINT16_MAX, get_duty_pot_value());
 }
 
 TEST(tempo_and_duty_testgroup, read_pot_values) {
@@ -67,19 +67,19 @@ TEST(tempo_and_duty_testgroup, read_pot_values) {
 TEST(tempo_and_duty_testgroup, read_and_update_pot_values) {
     uint16_t last_tempo = 0;
     uint16_t last_duty = 0;
-    CHECK_EQUAL(last_tempo, get_tempo());
-    CHECK_EQUAL(last_duty, get_duty());
+    CHECK_EQUAL(last_tempo, get_tempo_pot_value());
+    CHECK_EQUAL(last_duty, get_duty_pot_value());
 
     for (int i = 0; i < 15; ++i) {
         read_pots();
-        CHECK_EQUAL(last_tempo, get_tempo());
-        CHECK_EQUAL(last_duty, get_duty());
+        CHECK_EQUAL(last_tempo, get_tempo_pot_value());
+        CHECK_EQUAL(last_duty, get_duty_pot_value());
     }
     last_tempo = 85;
     last_duty = 2 * 85;
     read_pots();
-    CHECK_EQUAL(last_tempo, get_tempo());
-    CHECK_EQUAL(last_duty, get_duty());
+    CHECK_EQUAL(last_tempo, get_tempo_pot_value());
+    CHECK_EQUAL(last_duty, get_duty_pot_value());
 }
 
 

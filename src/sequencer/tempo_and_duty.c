@@ -26,11 +26,11 @@ void init_pots(void) {
     init_pot(&duty_pot, DUTY_READINGS_PER_BLOCK_AVERAGE);
 }
 
-uint16_t get_tempo(void) {
+uint16_t get_tempo_pot_value(void) {
     return tempo_pot.last_average;
 }
 
-uint16_t get_duty(void) {
+uint16_t get_duty_pot_value(void) {
     return duty_pot.last_average;
 }
 
