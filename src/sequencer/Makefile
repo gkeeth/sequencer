@@ -77,9 +77,8 @@ $(TEST_TARGET):	$(TEST_DEPS)
 
 # TODO: make a static library for test files
 
-# TODO: this may not actually be phony, TBD
 .PHONY: test
-test:		$(TEST_TARGET)
+test: $(TEST_TARGET)
 	./$(TEST_TARGET) $(CPPUTEST_FLAGS)
 
 # generate compile_commands.json (for language server)
