@@ -295,7 +295,7 @@ void set_tempo_platform(uint32_t tempo) {
 }
 #endif
 
-void failed_platform(char *file, int line) {
+void failed_platform(const char *file, int line) {
     uart_send_string("ASSERT FAILED at ");
     uart_send_string(file);
     uart_send_string(":");

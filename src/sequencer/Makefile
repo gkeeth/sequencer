@@ -26,6 +26,9 @@ TEST_CC = gcc
 # TODO: may want to make a separate LDLIBS variable for tests
 TEST_LDLIBS += -L$(CPPUTEST_HOME)/build/lib -lCppUTest -lCppUTestExt
 TEST_TARGET = $(PROJECT)_tests
+TEST_CPPFLAGS += -g -O0
+
+# command line args for test binary
 CPPUTEST_FLAGS = -c
 
 # You shouldn't have to edit anything below here.
@@ -62,7 +65,7 @@ $(TEST_BUILD_DIR)/%.o: $(MOCKS_DIR)/%.c
 $(TEST_BUILD_DIR)/%.o: $(MOCKS_DIR)/%.cpp
 	@printf "  CXX\t$<\n"
 	@mkdir -p $(dir $@)
-	$(Q)$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
+	$(Q)$(CXX) $(TEST_CXXFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
 # source files
 $(TEST_BUILD_DIR)/%.o: %.c
@@ -98,6 +101,9 @@ print_vars:
 	$(info CXX: $(CXX))
 	$(info COMPILE.cpp: $(COMPILE.cpp))
 	$(info COMPILE.c: $(COMPILE.c))
+	$(info TEST_CFLAGS: $(TEST_CFLAGS))
+	$(info TEST_CPPFLAGS: $(TEST_CPPFLAGS))
+	$(info TEST_CXXFLAGS: $(TEST_CXXFLAGS))
 	$(info OBJS: $(OBJS))
 	$(info TEST_SRC: $(TEST_SRC))
 	$(info MOCKS_SRC: $(MOCKS_SRC))
