@@ -27,4 +27,7 @@ TEST(assert_testgroup, assert_fail_test) {
     CHECK_TRUE(assert_get_expected());
     ASSERT(0);
     CHECK_TRUE(assert_get_hit());
+
+    assert_fake_setup(true);
+    CHECK_FALSE(assert_get_hit());
 }
