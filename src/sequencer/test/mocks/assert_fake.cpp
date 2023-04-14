@@ -3,8 +3,7 @@
 #include "CppUTest/TestHarness.h"
 
 #include "platform.h"
-#include "platform_utils_fake.h"
-
+#include "assert_fake.h"
 
 static bool assert_expected = false;
 static bool assert_hit = false;

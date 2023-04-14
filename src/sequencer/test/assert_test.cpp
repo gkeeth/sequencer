@@ -1,6 +1,6 @@
 #include "CppUTest/TestHarness.h"
 
-#include "platform_utils_fake.h"
+#include "assert_fake.h"
 
 extern "C" {
 #include "utils.h"
