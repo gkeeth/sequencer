@@ -6,8 +6,11 @@
 /*
  * convert period in milliseconds to a value for a timer's ARR register,
  * including the -1 offset. A prescaler value of TIMER_PRESCALER is assumed.
+ * (TODO: make TIMER_PRESCALER an argument of this function?)
  *
- * The maximum allowable period is UINT16_MAX * TIMER_PRESCALER / SYSCLK_FREQ_MHZ / 1000
+ * The maximum allowable period is:
+ *   UINT16_MAX * TIMER_PRESCALER / 1000 / SYSCLK_FREQ_MHZ
+ * This is enforced by assertion.
  *
  * The returned value for ARR is clamped to a minimum of 0.
  */
