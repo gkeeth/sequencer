@@ -7,66 +7,12 @@
 #include <libopencm3/stm32/timer.h>
 
 #include "platform.h"
+#include "platform_constants.h"
+#include "platform_utils.h"
 #include "uart.h" // for uart logging in asserts
 #include "tempo_and_duty.h" // for updating pot values in ADC ISR
 #include "utils.h"
 
-#define SYSCLK_FREQ_MHZ 48U
-#define SYSCLK_FREQ_HZ (SYSCLK_FREQ_MHZ * 1000000U)
-
-#define USART USART1
-#define RCC_USART RCC_USART1
-#define RCC_UART_GPIO RCC_GPIOA
-#define PORT_UART GPIOA
-#define PIN_UART_TX GPIO9
-#define PIN_UART_RX GPIO10
-
-#define PORT_ADC GPIOB
-#define RCC_ADC_GPIO RCC_GPIOB
-#define PIN_DUTY GPIO0
-#define PIN_TEMPO GPIO1
-#define ADC_CHANNEL_DUTY 8
-#define ADC_CHANNEL_TEMPO 9
-#define RCC_ADC_TIMER RCC_TIM3
-#define ADC_TIMER TIM3
-#define ADC_TIMER_TRIGGER ADC_CFGR1_EXTSEL_TIM3_TRGO
-#define ADC_TRIGGER_RATE_HZ 1000
-
-#define PORT_STATUS_LED GPIOA
-#define PIN_STATUS_LED GPIO15
-#define RCC_STATUS_LED_GPIO RCC_GPIOA
-#define PORT_LEDS GPIOB
-#define PIN_LEDS GPIO3
-#define LEDS_TIMER TIM2
-#define LEDS_TIM_OC TIM_OC2
-#define LEDS_GPIO_AF GPIO_AF2
-#define RCC_LEDS_GPIO RCC_GPIOB
-#define RCC_LEDS_TIMER RCC_TIM2
-// TODO: calculate this based on led protocol
-#define LED_FREQ_HZ 10000
-
-#define RCC_SEQCLKOUT_GPIO RCC_GPIOA
-#define RCC_SEQCLKOUT_TIMER RCC_TIM1
-#define PORT_SEQCLKOUT GPIOA
-#define PIN_SEQCLKOUT GPIO11
-#define SEQCLKOUT_TIMER TIM1
-#define SEQCLKOUT_TIM_OC TIM_OC4
-#define SEQCLKOUT_GPIO_AF GPIO_AF2
-#define SEQCLKOUT_FREQ_HZ 1000
-
-/*
- * convert period in milliseconds to a value for a timer's ARR register,
- * including the -1 offset.
- */
-static uint16_t timer_ms_to_arr(uint32_t period_ms) {
-    // ASSERT(UINT32_MAX / 1000 / SYSCLK_FREQ_MHZ > period_ms);
-    return (SYSCLK_FREQ_MHZ * period_ms * 1000) - 1;
-}
-
-static uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
-    ASSERT(frequency_hz != 0);
-    return (SYSCLK_FREQ_MHZ / frequency_hz) - 1;
-}
 
 void uart_setup_platform(void) {
     rcc_periph_clock_enable(RCC_UART_GPIO);
@@ -236,15 +182,14 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral, uint32_t pe
         timer_output_channel = LEDS_TIM_OC;
     }
 
-    uint32_t arr = timer_ms_to_arr(period_ms);
+    //timer_calculate_period_and_prescaler(uint32_t period_ms, uint32_t *arr, uint32_t *psc)
+    uint32_t arr;
+    uint32_t psc;
+    timer_calculate_period_and_prescaler(period_ms, &arr, &psc);
+    ASSERT(arr <= UINT32_MAX / 100 - 1); // prevent overflow
     uint32_t ccr = ((arr + 1) * duty / 100) - 1;
 
-
-    // prevent overflow
-    // ASSERT(value <= UINT32_MAX / 100);
-    ASSERT(arr <= UINT32_MAX / 100);
-
-    // TODO: use timer_set_prescaler(timer_peripheral, psc);
+    timer_set_prescaler(timer_peripheral, psc);
     timer_set_period(timer_peripheral, arr);
     timer_set_oc_value(timer_peripheral, timer_output_channel, ccr);
 }
@@ -256,7 +201,6 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral, uint32_t pe
  * - period_ms: PWM period in milliseconds
  * - duty: PWM duty cycle as a percentage (i.e. 0-100)
  *
- * TODO: it doesn't make a ton of sense to specify freq as an argument here but not in the set_duty_cycle func
  */
 static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period_ms, uint32_t duty) {
     ASSERT(pwm_allowed_timer(timer_peripheral));
@@ -290,23 +234,11 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period_ms
     gpio_set_af(port, alternate_function, pin);
 
     timer_direction_up(timer_peripheral);
-    /*
-     * settings for initial bringup:
-     * 1kHz frequency, 20% duty cycle
-     * prescaler: 0
-     * ARR = sysclk * period - 1 = 48,000 - 1
-     *   period: 1ms
-     *   sysclk = 48MHz
-     */
-    // TODO: prescale the sequencer clock to avoid overflow in the ARR register
-    timer_set_prescaler(timer_peripheral, 0);
-    timer_set_period(timer_peripheral, timer_ms_to_arr(period_ms));
-    // PWM1: output is active when counter < compare register
-    // PWM2: output is inactive when counter < compare register
     timer_set_oc_mode(timer_peripheral, timer_output_channel, TIM_OCM_PWM1);
     // set OCxPE bit in TIMx_CCMRx
     timer_enable_oc_preload(timer_peripheral, timer_output_channel);
     // TODO: set set ARPE in CR1 register to enable auto-reload preload register?
+    // timer_enable_preload(timer_peripheral);
     // set or clear CCxP bit in CCER
     timer_set_oc_polarity_high(timer_peripheral, timer_output_channel);
     // set CCxE bit in TIMx_CCER
@@ -315,12 +247,13 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period_ms
         // advanced control timers (TIM1) additionally need to enable *all* outputs
         timer_enable_break_main_output(timer_peripheral);
     }
+
+    pwm_set_single_timer_platform(timer_peripheral, period_ms, duty);
+
     // initialize all registers by triggering an UG event
     timer_generate_event(timer_peripheral, TIM_EGR_UG);
 
     timer_enable_counter(timer_peripheral);
-
-    pwm_set_single_timer_platform(timer_peripheral, period_ms, duty);
 }
 
 void pwm_setup_platform(void) {

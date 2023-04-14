@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// to allow failed_platform() to be called from cpp code in unit tests
+#ifdef __cplusplus
+#define EXTERNC extern "C"
+#else
+#define EXTERNC
+#endif
+
 void clock_setup_platform(void);
 
 void uart_setup_platform(void);
@@ -23,6 +30,6 @@ void pwm_set_clock_period_and_duty_platform(uint32_t period_ms, uint32_t duty);
 
 void set_tempo_platform(uint32_t tempo);
 
-void failed_platform(char *file, int line);
+EXTERNC void failed_platform(const char *file, int line);
 
 #endif // PLATFORM_H

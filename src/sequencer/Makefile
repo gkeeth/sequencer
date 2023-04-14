@@ -5,7 +5,7 @@ BUILD_DIR = bin
 NO_TEST_CFILES = sequencer.c platform.c clocks.c
 
 # Add project c files that do need to be tested here
-TEST_CFILES = utils.c tempo_and_duty.c uart.c switch.c led.c pwm.c
+TEST_CFILES = utils.c tempo_and_duty.c uart.c switch.c led.c pwm.c platform_utils.c
 
 CFILES = $(NO_TEST_CFILES) $(TEST_CFILES)
 
@@ -16,9 +16,9 @@ TEST_DIR = test
 MOCKS_DIR = test/mocks
 TEST_BUILD_DIR = $(TEST_DIR)/$(BUILD_DIR)
 TEST_SRC := $(wildcard $(TEST_DIR)/*.cpp)
-MOCKS_SRC := $(wildcard $(MOCKS_DIR)/*.c)
+MOCKS_SRC := $(wildcard $(MOCKS_DIR)/*.c) $(wildcard $(MOCKS_DIR)/*.cpp)
 TEST_OBJS := $(patsubst %.cpp,$(TEST_BUILD_DIR)/%.o,$(notdir $(TEST_SRC)))
-MOCKS_OBJS := $(patsubst %.c,$(TEST_BUILD_DIR)/%.o,$(notdir $(MOCKS_SRC)))
+MOCKS_OBJS := $(patsubst %.cpp,$(TEST_BUILD_DIR)/%.o,$(patsubst %.c,$(TEST_BUILD_DIR)/%.o,$(notdir $(MOCKS_SRC))))
 TEST_CFILE_OBJS := $(patsubst %.c,$(TEST_BUILD_DIR)/%.o,$(TEST_CFILES))
 CPPUTEST_HOME = test/cpputest
 TEST_INCLUDES = -I$(CPPUTEST_HOME)/include -I$(TEST_DIR) -I$(MOCKS_DIR) -I.
@@ -52,11 +52,17 @@ $(TEST_BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(Q)$(CXX) $(TEST_CXXFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
-# test fake/mock files
+# test fake/mock C files
 $(TEST_BUILD_DIR)/%.o: $(MOCKS_DIR)/%.c
 	@printf "  CC\t$<\n"
 	@mkdir -p $(dir $@)
 	$(Q)$(TEST_CC) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
+
+# test fake/mock C++ files
+$(TEST_BUILD_DIR)/%.o: $(MOCKS_DIR)/%.cpp
+	@printf "  CXX\t$<\n"
+	@mkdir -p $(dir $@)
+	$(Q)$(CXX) $(TEST_CFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
 # source files
 $(TEST_BUILD_DIR)/%.o: %.c

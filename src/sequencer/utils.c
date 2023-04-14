@@ -4,7 +4,7 @@
 #include "uart.h"
 #include "platform.h"
 
-void failed(char *file, int line) {
+void failed(const char *file, int line) {
     failed_platform(file, line);
 }
 
@@ -35,11 +35,13 @@ int32_t map_range(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, in
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-#if 0
+#if 1
 /*
  * map `x` with input range [in_min, in_max] to output range [out_min, out_max]
  *
  * all values are unsigned, and max values must be greater than min values.
+ *
+ * TODO: this is broken
  */
 uint32_t umap_range(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_min, uint32_t out_max) {
     // ASSERT(out_max > out_min);

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-void failed(char *file, int line);
+void failed(const char *file, int line);
 #define ASSERT(expr) \
     if (expr) {} else failed(__FILE__, __LINE__)
 
