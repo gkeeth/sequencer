@@ -10,11 +10,11 @@ extern "C" {
 
 TEST_GROUP(platform_utils_testgroup) {
     void setup() {
-        assert_platform_setup(false);
+        assert_fake_setup(false);
     }
 
     void teardown() {
-        assert_platform_setup(false);
+        assert_fake_setup(false);
     }
 };
 
@@ -28,18 +28,18 @@ TEST(platform_utils_testgroup, timer_ms_to_arr_in_range) {
 }
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_out_of_range) {
-    assert_platform_setup(true);
+    assert_fake_setup(true);
     timer_ms_to_arr(3000); // will overflow a 16-bit ARR
     CHECK_TRUE(assert_get_hit());
 }
 
 TEST_GROUP(assert_testgroup) {
     void setup() {
-        assert_platform_setup(false);
+        assert_fake_setup(false);
     }
 
     void teardown() {
-        assert_platform_setup(false);
+        assert_fake_setup(false);
     }
 };
 
@@ -50,7 +50,7 @@ TEST(assert_testgroup, assert_pass_test) {
 }
 
 TEST(assert_testgroup, assert_fail_test) {
-    assert_platform_setup(true);
+    assert_fake_setup(true);
     CHECK_TRUE(assert_get_expected());
     ASSERT(0);
     CHECK_TRUE(assert_get_hit());

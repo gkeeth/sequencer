@@ -6,25 +6,25 @@
 #include "platform_utils_fake.h"
 
 
-static bool expected = false;
-static bool hit = false;
+static bool assert_expected = false;
+static bool assert_hit = false;
 
-void assert_platform_setup(bool assert_expected) {
-    expected = assert_expected;
-    hit = false;
+void assert_fake_setup(bool expected) {
+    assert_expected = expected;
+    assert_hit = false;
 }
 
 bool assert_get_hit(void) {
-    return hit;
+    return assert_hit;
 }
 
 bool assert_get_expected(void) {
-    return expected;
+    return assert_expected;
 }
 
 void failed_platform(const char *file, int line) {
-    hit = true;
-    if (expected) {
+    assert_hit = true;
+    if (assert_expected) {
         TEST_EXIT;
     } else {
         std::ostringstream ss;
