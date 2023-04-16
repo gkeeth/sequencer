@@ -5,21 +5,32 @@
 
 /*
  * convert period in milliseconds to a value for a timer's ARR register,
- * including the -1 offset. A prescaler value of TIMER_PRESCALER is assumed.
- * (TODO: make TIMER_PRESCALER an argument of this function?)
+ * including the -1 offset. The value of prescaler does not include the -1
+ * offset: for an un-prescaled timer, prescaler should be 1.
  *
  * The maximum allowable period is:
- *   UINT16_MAX * TIMER_PRESCALER / 1000 / SYSCLK_FREQ_MHZ
- * This is enforced by assertion.
+ *   UINT16_MAX * prescaler / 1000 / SYSCLK_FREQ_MHZ
+ * This is enforced by assertion. (TODO: verify)
  *
  * The returned value for ARR is clamped to a minimum of 0.
  */
-uint16_t timer_ms_to_arr(uint32_t period_ms) {
-    static_assert(TIMER_PRESCALER > 0, "TIMER_PRESCALER must be a positive integer");
-    static_assert(TIMER_PRESCALER < UINT16_MAX, "TIMER_PRESCALER must be less than UINT16_MAX");
-    ASSERT(UINT16_MAX * TIMER_PRESCALER / 1000 / SYSCLK_FREQ_MHZ >= period_ms);
+uint16_t timer_ms_to_arr(uint32_t period_ms, uint32_t prescaler) {
+    // test for prescaler validity
+    ASSERT(prescaler > 0);
+    ASSERT(prescaler <= UINT16_MAX + 1U); // prescaler-1 must fit in a 16-bit reg
 
-    return umax(1, (SYSCLK_FREQ_MHZ * 1000 / TIMER_PRESCALER * period_ms)) - 1;
+    static_assert(SYSCLK_FREQ_MHZ <= UINT32_MAX / 1000U, "SYSCLK_FREQ_MHZ too large");
+    const uint32_t SYSCLK_FREQ_KHZ = 1000U * SYSCLK_FREQ_MHZ;
+
+    // prevent overflow
+    ASSERT(period_ms <= UINT32_MAX / SYSCLK_FREQ_KHZ * prescaler);
+    // ASSERT(period_ms <= UINT16_MAX * prescaler / SYSCLK_FREQ_KHZ); // TODO: which order is better? plot and find out
+
+    const uint32_t arr =  umax(1, (SYSCLK_FREQ_KHZ / prescaler * period_ms)) - 1;
+    // now check that it'll fit into a 16-bit register
+    ASSERT(arr <= UINT16_MAX);
+
+    return arr;
 }
 
 /*
@@ -39,6 +50,7 @@ uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
  */
 uint16_t timer_ns_to_arr(uint32_t period_ns) {
     // TODO: implement
+    (void) period_ns;
     return 0;
 }
 

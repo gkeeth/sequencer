@@ -4,8 +4,7 @@
 #include <stdint.h>
 
 void failed(const char *file, int line);
-#define ASSERT(expr) \
-    if (expr) {} else failed(__FILE__, __LINE__)
+#define ASSERT(expr) if (expr) {} else failed(__FILE__, __LINE__);
 
 uint32_t umax(uint32_t a, uint32_t b);
 uint32_t umin(uint32_t a, uint32_t b);

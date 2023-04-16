@@ -24,7 +24,7 @@ bool assert_get_expected(void) {
 void failed_platform(const char *file, int line) {
     assert_hit = true;
     if (assert_expected) {
-        TEST_EXIT;
+        TEST_EXIT; // NOTE: this ends the test; no checks can come after
     } else {
         std::ostringstream ss;
         ss << "hit unexpected assertion in " << file << ":" << line << std::endl;
