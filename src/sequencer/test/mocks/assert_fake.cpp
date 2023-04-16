@@ -1,5 +1,3 @@
-#include <string>
-#include <sstream>
 #include "CppUTest/TestHarness.h"
 
 #include "platform.h"
@@ -23,12 +21,6 @@ bool assert_get_expected(void) {
 
 void failed_platform(const char *file, int line) {
     assert_hit = true;
-    if (assert_expected) {
-        TEST_EXIT; // NOTE: this ends the test; no checks can come after
-    } else {
-        std::ostringstream ss;
-        ss << "hit unexpected assertion in " << file << ":" << line << std::endl;
-        std::string s = ss.str();
-        FAIL(s.c_str());
-    }
+    CHECK_TRUE(assert_get_expected());
+    TEST_EXIT; // NOTE: this ends the test; no checks can come after
 }
