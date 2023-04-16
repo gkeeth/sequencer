@@ -23,9 +23,8 @@ uint16_t timer_ms_to_arr(uint32_t period_ms, uint32_t prescaler) {
     const uint32_t SYSCLK_FREQ_KHZ = 1000U * SYSCLK_FREQ_MHZ;
 
     // prevent overflow
+    ASSERT(prescaler <= SYSCLK_FREQ_KHZ);
     ASSERT(period_ms <= UINT32_MAX / SYSCLK_FREQ_KHZ * prescaler);
-    // ASSERT(period_ms <= UINT16_MAX * prescaler / SYSCLK_FREQ_KHZ); // TODO: which order is better? plot and find out
-
     const uint32_t arr =  umax(1, (SYSCLK_FREQ_KHZ / prescaler * period_ms)) - 1;
     // now check that it'll fit into a 16-bit register
     ASSERT(arr <= UINT16_MAX);
