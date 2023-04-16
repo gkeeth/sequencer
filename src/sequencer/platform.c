@@ -182,7 +182,7 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral, uint32_t pe
         timer_output_channel = LEDS_TIM_OC;
     }
 
-    uint32_t arr = timer_ms_to_arr(period_ms);
+    uint32_t arr = timer_ms_to_arr(period_ms, TIMER_PRESCALER);
     uint32_t psc = TIMER_PRESCALER - 1; // TODO: make this parameterized to work for LEDs as well
     ASSERT(arr <= UINT32_MAX / 100 - 1); // prevent overflow
     uint32_t ccr = ((arr + 1) * duty / 100) - 1;
