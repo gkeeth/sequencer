@@ -16,6 +16,12 @@ TEST_GROUP(platform_utils_testgroup) {
     void teardown() {
         assert_fake_setup(false);
     }
+
+    void timer_ms_to_arr_expect_assert(uint32_t period_ms, uint32_t prescaler) {
+        assert_fake_setup(true);
+        timer_ms_to_arr(period_ms, prescaler);
+        FAIL("did not hit expected assert in timer_ms_to_arr");
+    }
 };
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_in_range) {
@@ -29,33 +35,22 @@ TEST(platform_utils_testgroup, timer_ms_to_arr_in_range) {
 }
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_assert_period_out_of_range) {
-    // TODO: refactor this structure into a new function
-    assert_fake_setup(true);
-    timer_ms_to_arr(3000, 2000);
-    CHECK_TRUE(assert_get_hit());
+    timer_ms_to_arr_expect_assert(3000, 2000);
 }
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_assert_psc_out_of_range_min) {
-    assert_fake_setup(true);
-    timer_ms_to_arr(0, 0);
-    FAIL("did not hit expected assert in timer_ms_to_arr");
+    timer_ms_to_arr_expect_assert(0, 0);
 }
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_assert_psc_out_of_range_max) {
-    assert_fake_setup(true);
-    timer_ms_to_arr(0, UINT16_MAX + 2U);
-    FAIL("did not hit expected assert in timer_ms_to_arr");
+    timer_ms_to_arr_expect_assert(0, UINT16_MAX + 2U);
 }
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_assert_overflow) {
-    assert_fake_setup(true);
     // fail the overflow-prevention assert
-    timer_ms_to_arr(UINT32_MAX, 1);
-    FAIL("did not hit expected assert in timer_ms_to_arr");
+    timer_ms_to_arr_expect_assert(UINT32_MAX, 1);
 }
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_assert_too_big) {
-    assert_fake_setup(true);
-    timer_ms_to_arr(2, 1);
-    FAIL("did not hit expected assert in timer_ms_to_arr");
+    timer_ms_to_arr_expect_assert(2, 1);
 }
