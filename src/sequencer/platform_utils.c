@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "sequencer.h"          // for MIN/MAX_BPM_TENTHS
 #include "platform_utils.h"
 #include "platform_constants.h"
 #include "utils.h"
@@ -51,5 +52,44 @@ uint16_t timer_ns_to_arr(uint32_t period_ns) {
     // TODO: implement
     (void) period_ns;
     return 0;
+}
+
+/*
+ * convert a tempo in tenths of bpm to an appropriate clock period and prescaler.
+ *
+ * - tenths_of_bpm: tempo in tenths of a bpm
+ * - period: output pointer for calculated timer period in clock cycles, without -1 offset.
+ * - prescaler: output pointer for calculated timer prescaler in clock cycles, without -1 offset.
+ */
+void tempo_to_period_and_prescaler(uint32_t tenths_of_bpm, uint32_t *period, uint32_t *prescaler) {
+    ASSERT(tenths_of_bpm <= MAX_BPM_TENTHS);
+    ASSERT(tenths_of_bpm >= MIN_BPM_TENTHS);
+
+    // TODO: plot this breakdown and check error
+    if (MAX_BPM_TENTHS >= tenths_of_bpm && tenths_of_bpm > 2000) {
+        *prescaler = 300U;
+    } else if (2000 >= tenths_of_bpm && tenths_of_bpm > 1000) {
+        *prescaler = 600U;
+    } else if (1000 >= tenths_of_bpm && tenths_of_bpm > 500) {
+        *prescaler = 1200U;
+    } else { // 500 >= tenths_of_bpm >= 30
+        *prescaler = 2400U;
+    }
+
+    uint32_t prescaled_clock = SYSCLK_FREQ_HZ / *prescaler;
+    ASSERT(prescaled_clock <= UINT32_MAX / (60U * 10U));
+    *period = prescaled_clock * 60U * 10U / tenths_of_bpm;
+}
+
+uint32_t duty_to_pwm_compare(uint32_t period, uint32_t duty_percent) {
+    ASSERT(duty_percent >= 100U);
+    ASSERT(period <= UINT32_MAX / 100U);
+    uint32_t pwm_compare;
+    if (period) {
+        pwm_compare = period * 100U / duty_percent;
+    } else {
+        pwm_compare = period;
+    }
+    return pwm_compare;
 }
 

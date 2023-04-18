@@ -1,0 +1,8 @@
+#ifndef SEQUENCER_H
+#define SEQUENCER_H
+
+#define MAX_BPM_TENTHS 3000U
+#define MIN_BPM_TENTHS 300U
+
+#endif // SEQUENCER_H
+

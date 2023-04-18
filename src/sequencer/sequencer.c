@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "sequencer.h"
 #include "clocks.h"
 #include "led.h"
 #include "uart.h"
@@ -29,7 +30,7 @@ static void setup(void) {
     adc_setup();
     init_pots();
     pwm_setup();
-    pwm_set_clock_period_and_duty(bpm_to_ms(120), 20);
+    pwm_set_tempo_and_duty(1200, 50);
 }
 
 int main(void) {
@@ -48,6 +49,7 @@ int main(void) {
             last_flash_millis = millis();
         }
 
+        // TODO: write a wrapper for map_range that abstracts out the pot range (0-4095)
         uint32_t duty_percent = map_range(get_duty_pot_value(), 0, 4095, 5, 95);
         // TODO: dhz doesn't give nearly enough BPM resolution. We want at least 0.1 BPM resolution
         // need to use (signed) map_range to reverse the direction - TODO fix this
@@ -58,6 +60,7 @@ int main(void) {
         // uint32_t tempo_us = (uint32_t) map_range(tempo_raw, 0, 4095, bpm_to_ns(30)/1000, bpm_to_ns(300)/1000);
         uint32_t tempo_ms = (uint32_t) map_range(tempo_raw, 0, 4095, bpm_to_ms(30), bpm_to_ms(300));
         uint32_t tempo_bpm = map_range(tempo_raw, 0, 4095, 30, 300);
+        uint32_t tempo_bpm_tenths = map_range(tempo_raw, 0, 4095, MIN_BPM_TENTHS, MAX_BPM_TENTHS);
         if ((millis() - last_adc_print_millis) > ADC_PRINT_DELAY) {
             uart_send_string("tempo (raw): ");
             uart_send_number(tempo_raw);
@@ -82,32 +85,11 @@ int main(void) {
             last_adc_print_millis = millis();
         }
 
-        pwm_set_clock_period_and_duty(tempo_ms, duty_percent);
+        pwm_set_tempo_and_duty(tempo_bpm_tenths, duty_percent);
 
         uart_echo();
     }
 
     return 0;
-}
-
-static uint32_t clock_tempo;
-static uint32_t clock_duty;
-
-uint32_t get_tempo(void);
-uint32_t get_duty(void);
-void set_tempo_and_duty(uint32_t tempo, uint32_t duty);
-
-uint32_t get_tempo(void) {
-    return clock_tempo;
-}
-
-uint32_t get_duty(void) {
-    return clock_duty;
-}
-
-void set_tempo_and_duty(uint32_t tempo, uint32_t duty) {
-    clock_tempo = tempo;
-    clock_duty = duty;
-    // TODO: update hardware tempo/duty
 }
 

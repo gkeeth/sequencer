@@ -164,28 +164,33 @@ static bool pwm_allowed_timer(uint32_t timer_peripheral) {
  * TODO: parameterize the output channels.
  *
  * - timer_peripheral: libopencm3 timer peripheral, e.g. TIM1
- * - period_ms: PWM period in milliseconds
- * - duty: PWM duty cycle as a percent
+ * - period: PWM period (in clock cycles), without any -1 offset.
+ * - prescaler: PWM prescaler (in clock cycles), without any -1 offset. For no prescaler, use 1.
+ * - pwm_compare: PWM compare value (in clock cycles), without any -1 offset.
  */
-static void pwm_set_single_timer_platform(uint32_t timer_peripheral, uint32_t period_ms, uint32_t duty) {
-    ASSERT(duty <= 100); // prevent overflow
+static void pwm_set_single_timer_platform(uint32_t timer_peripheral,
+        uint32_t period, uint32_t prescaler, uint32_t pwm_compare) {
     ASSERT(pwm_allowed_timer(timer_peripheral));
 
+    ASSERT(period);
+    ASSERT(period - 1U <= UINT16_MAX);
+    uint16_t arr = period - 1U;
+
+    ASSERT(prescaler);
+    ASSERT(prescaler - 1U <= UINT16_MAX);
+    uint16_t psc = prescaler - 1U;
+
+    ASSERT(pwm_compare);
+    ASSERT(pwm_compare - 1U <= UINT16_MAX);
+    uint16_t ccr = pwm_compare - 1U;
+
     // CCR = (ARR + 1) * (duty fraction)
-    // uint32_t value;
     uint32_t timer_output_channel;
     if (timer_peripheral == SEQCLKOUT_TIMER) {
-        // value = (SYSCLK_FREQ_HZ / SEQCLKOUT_FREQ_HZ);
         timer_output_channel = SEQCLKOUT_TIM_OC;
     } else {
-        // value = (SYSCLK_FREQ_HZ / LED_FREQ_HZ);
         timer_output_channel = LEDS_TIM_OC;
     }
-
-    uint32_t arr = timer_ms_to_arr(period_ms, TIMER_PRESCALER);
-    uint32_t psc = TIMER_PRESCALER - 1; // TODO: make this parameterized to work for LEDs as well
-    ASSERT(arr <= UINT32_MAX / 100 - 1); // prevent overflow
-    uint32_t ccr = ((arr + 1) * duty / 100) - 1;
 
     timer_set_prescaler(timer_peripheral, psc);
     timer_set_period(timer_peripheral, arr);
@@ -196,11 +201,13 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral, uint32_t pe
  * set up a single timer for PWM.
  *
  * - timer_peripheral: timer to configure; can be either SEQCLKOUT_TIMER or LEDS_TIMER
- * - period_ms: PWM period in milliseconds
- * - duty: PWM duty cycle as a percentage (i.e. 0-100)
+ * - period: pwm period (in clock cycles), without any -1 offset.
+ * - prescaler: pwm prescaler (in clock cycles), without any -1 offset. for no prescaler, use 1.
+ * - pwm_compare: pwm compare value (in clock cycles), without any -1 offset.
  *
  */
-static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period_ms, uint32_t duty) {
+static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
+        uint32_t prescaler, uint32_t pwm_compare) {
     ASSERT(pwm_allowed_timer(timer_peripheral));
 
     uint32_t timer_rcc;
@@ -246,7 +253,10 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period_ms
         timer_enable_break_main_output(timer_peripheral);
     }
 
+    pwm_set_single_timer_platform(timer_peripheral, period, prescaler, pwm_compare);
+#if 0
     pwm_set_single_timer_platform(timer_peripheral, period_ms, duty);
+#endif
 
     // initialize all registers by triggering an UG event
     timer_generate_event(timer_peripheral, TIM_EGR_UG);
@@ -255,28 +265,43 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period_ms
 }
 
 void pwm_setup_platform(void) {
-    pwm_setup_single_timer(SEQCLKOUT_TIMER, SEQCLKOUT_FREQ_HZ * 10, 20);
-    pwm_setup_single_timer(LEDS_TIMER, LED_FREQ_HZ * 10, 80);
+    // TODO: don't hardcode these
+    uint32_t tenths_of_bpm = 1200U;
+    uint32_t clk_period;
+    uint32_t clk_prescaler;
+    uint32_t clk_pwm_compare;
+    uint32_t duty_percent = 50;
+    tempo_to_period_and_prescaler(tenths_of_bpm, &clk_period, &clk_prescaler);
+    clk_pwm_compare = duty_to_pwm_compare(clk_period, duty_percent);
+    pwm_setup_single_timer(SEQCLKOUT_TIMER, clk_period, clk_prescaler, clk_pwm_compare);
+
+    // TODO: make some functions that do this for us
+    uint32_t leds_period = SYSCLK_FREQ_HZ / 10000U;
+    uint32_t leds_prescaler = 1;
+    uint32_t leds_pwm_compare = leds_period * 80U / 100U;
+    pwm_setup_single_timer(LEDS_TIMER, leds_period, leds_prescaler, leds_pwm_compare);
 }
 
 /*
- * set the PWM period and duty cycle for the step LED control timer
+ * set the PWM period, prescaler, and duty cycle for the step LEDs control timer
  *
- * - period_ms: PWM period in milliseconds
- * - duty: PWM duty cycle as a percent (e.g. 50)
+ * - period: pwm period (in clock cycles), without any -1 offset.
+ * - prescaler: pwm prescaler (in clock cycles), without any -1 offset. for no prescaler, use 1.
+ * - pwm_compare: pwm compare value (in clock cycles), without any -1 offset.
  */
-void pwm_set_leds_period_and_duty_platform(uint32_t period_ms, uint32_t duty) {
-    pwm_set_single_timer_platform(LEDS_TIMER, period_ms, duty);
+void pwm_set_leds_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare) {
+    pwm_set_single_timer_platform(LEDS_TIMER, period, prescaler, pwm_compare);
 }
 
 /*
- * set the PWM period and duty cycle for the generated sequencer clock
+ * set the PWM period, prescaler, and duty cycle for the generated sequencer clock
  *
- * - period_ms: PWM period in milliseconds
- * - duty: PWM duty cycle as a percent (e.g. 50)
+ * - period: PWM period (in clock cycles), without any -1 offset.
+ * - prescaler: PWM prescaler (in clock cycles), without any -1 offset. For no prescaler, use 1.
+ * - pwm_compare: PWM compare value (in clock cycles), without any -1 offset.
  */
-void pwm_set_clock_period_and_duty_platform(uint32_t period_ms, uint32_t duty) {
-    pwm_set_single_timer_platform(SEQCLKOUT_TIMER, period_ms, duty);
+void pwm_set_clock_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare) {
+    pwm_set_single_timer_platform(SEQCLKOUT_TIMER, period, prescaler, pwm_compare);
 }
 
 #if 0
