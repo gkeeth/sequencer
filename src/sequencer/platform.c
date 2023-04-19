@@ -157,6 +157,30 @@ static bool pwm_allowed_timer(uint32_t timer_peripheral) {
     return timer_peripheral == SEQCLKOUT_TIMER || timer_peripheral == LEDS_TIMER;
 }
 
+/*
+ * TODO: need the following functions
+ * platform-specific (prescaler, arr, ccr, etc are passed directly)
+ * 1. tenths_of_bpm_to_period(desired_tenths_of_bpm, result_arr, result_psc)
+ * 2. period_ms_to_arr(period_ms, prescaler) // helper - this is not necessary
+ * 3. duty_percent_to_ccr(duty_percent, arr) // helper
+ * 3. pwm_set_single_timer_platform(timer_peripheral, arr, psc, ccr)
+ * 4. pwm_
+ *
+ * user-facing (ARR, PSC, CCR are calculated, saved internally, and hidden from the user)
+ * 1. set_seq_tempo(tenths_of_bpm)
+ * 1. set_seq_clock_period_ms(period_ms)
+ * 2. set_led_period_ns(period_ns)
+ * 3. set_seq_clock_duty(duty_percent)
+ * 4. set_led_duty(duty_percent) // might make more sense to have a "set 1" and
+ *                               // "set 0" function, and push duty to a lower
+ *                               // level
+ * 5. led_setup(period_ns)
+ * 6. seq_clock_setup(period_ms)
+ *
+ * TODO: this API would be better if you just specified a BPM and it calculated
+ * an appropriate PSC/ARR that minimized tempo and PWM error, or at least kept
+ * it approximately constant across tempo, rather than increasing with tempo.
+ */
 
 /*
  * set PWM period (ARR) and duty cycle (CCR) for a single timer and output channel.
