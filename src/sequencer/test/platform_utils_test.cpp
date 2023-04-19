@@ -22,6 +22,12 @@ TEST_GROUP(platform_utils_testgroup) {
         timer_ms_to_arr(period_ms, prescaler);
         FAIL("did not hit expected assert in timer_ms_to_arr");
     }
+
+    void duty_to_pwm_compare_assert(uint32_t period, uint32_t duty_percent) {
+        assert_fake_setup(true);
+        duty_to_pwm_compare(period, duty_percent);
+        FAIL("did not hit expected assert in duty_to_pwm_compare");
+    }
 };
 
 TEST(platform_utils_testgroup, timer_ms_to_arr_in_range) {
@@ -54,3 +60,22 @@ TEST(platform_utils_testgroup, timer_ms_to_arr_assert_overflow) {
 TEST(platform_utils_testgroup, timer_ms_to_arr_assert_too_big) {
     timer_ms_to_arr_expect_assert(2, 1);
 }
+
+TEST(platform_utils_testgroup, duty_to_pwm_compare_correct_calculation) {
+    CHECK_EQUAL(1000, duty_to_pwm_compare(1000, 100));
+    CHECK_EQUAL(990, duty_to_pwm_compare(1000, 99));
+    CHECK_EQUAL(500, duty_to_pwm_compare(1000, 50));
+    CHECK_EQUAL(10, duty_to_pwm_compare(1000, 1));
+    CHECK_EQUAL(0, duty_to_pwm_compare(1000, 0));
+    CHECK_EQUAL(0, duty_to_pwm_compare(0, 0));
+}
+
+TEST(platform_utils_testgroup, duty_to_pwm_compare_assert_duty_too_large) {
+    duty_to_pwm_compare_assert(1000, 101);
+}
+
+TEST(platform_utils_testgroup, duty_to_pwm_compare_assert_period_too_large) {
+    duty_to_pwm_compare_assert(UINT32_MAX, 2);
+}
+
+
