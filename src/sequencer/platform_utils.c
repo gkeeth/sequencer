@@ -82,7 +82,7 @@ void tempo_to_period_and_prescaler(uint32_t tenths_of_bpm, uint32_t *period, uin
 }
 
 uint32_t duty_to_pwm_compare(uint32_t period, uint32_t duty_percent) {
-    ASSERT(duty_percent >= 100U);
+    ASSERT(duty_percent <= 100U);
     ASSERT(period <= UINT32_MAX / 100U);
     uint32_t pwm_compare;
     if (period) {
