@@ -51,36 +51,18 @@ int main(void) {
 
         // TODO: write a wrapper for map_range that abstracts out the pot range (0-4095)
         uint32_t duty_percent = map_range(get_duty_pot_value(), 0, 4095, 5, 95);
-        // TODO: dhz doesn't give nearly enough BPM resolution. We want at least 0.1 BPM resolution
-        // need to use (signed) map_range to reverse the direction - TODO fix this
-        // uint32_t tempo_ns = map_range(get_tempo_pot_value(), 0, 4095, bpm_to_ns(30), bpm_to_ns(300));
-        // uint32_t tempo_ns = umap_range(get_tempo_pot_value(), 0, 4095, bpm_to_ns(30), bpm_to_ns(300));
         uint32_t tempo_raw = get_tempo_pot_value();
-        // uint32_t tempo_ns = (uint32_t) map_range(tempo_raw, 0, 4095, bpm_to_ns(30), bpm_to_ns(300));
-        // uint32_t tempo_us = (uint32_t) map_range(tempo_raw, 0, 4095, bpm_to_ns(30)/1000, bpm_to_ns(300)/1000);
-        uint32_t tempo_ms = (uint32_t) map_range(tempo_raw, 0, 4095, bpm_to_ms(30), bpm_to_ms(300));
-        uint32_t tempo_bpm = map_range(tempo_raw, 0, 4095, 30, 300);
-        uint32_t tempo_bpm_tenths = map_range(tempo_raw, 0, 4095, MIN_BPM_TENTHS, MAX_BPM_TENTHS);
+        uint32_t tempo_bpm = umap_range(tempo_raw, 0, 4095, 30, 300);
+        uint32_t tempo_bpm_tenths = umap_range(tempo_raw, 0, 4095, MIN_BPM_TENTHS, MAX_BPM_TENTHS);
+
         if ((millis() - last_adc_print_millis) > ADC_PRINT_DELAY) {
             uart_send_string("tempo (raw): ");
             uart_send_number(tempo_raw);
-            /*
-            uart_send_string("            _,__,__,__\r\n");
-            uart_send_string("tempo (ns): ");
-            */
-            uart_send_string("tempo (ms): ");
-            uart_send_number(tempo_ms);
             uart_send_string("tempo (bpm): ");
             uart_send_number(tempo_bpm);
-            // uart_send_string("tempo (dHz): ");
-            // uart_send_number(tempo_dhz);
             uart_send_string("duty (raw): ");
             uart_send_number(get_duty_pot_value());
             uart_send_line("");
-            uart_send_string("30bpm in ms: ");
-            uart_send_number(bpm_to_ms(30));
-            uart_send_string("300bpm in ms: ");
-            uart_send_number(bpm_to_ms(300));
 
             last_adc_print_millis = millis();
         }
