@@ -27,6 +27,9 @@ TEST_CC = gcc
 TEST_LDLIBS += -L$(CPPUTEST_HOME)/build/lib -lCppUTest -lCppUTestExt
 TEST_TARGET = $(PROJECT)_tests
 TEST_CPPFLAGS += -g -O0
+# TODO: add warning flags for test and target
+
+CSTD = -std=c17
 
 # command line args for test binary
 CPPUTEST_FLAGS = -c
@@ -67,7 +70,7 @@ $(TEST_BUILD_DIR)/%.o: $(MOCKS_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(Q)$(CXX) $(TEST_CXXFLAGS) $(TEST_CPPFLAGS) $(TEST_INCLUDES) -o $@ -c $<
 
-# source files
+# application source files for test
 $(TEST_BUILD_DIR)/%.o: %.c
 	@printf "  CC\t$<\n"
 	@mkdir -p $(dir $@)
