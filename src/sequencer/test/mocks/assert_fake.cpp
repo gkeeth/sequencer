@@ -21,6 +21,9 @@ bool assert_get_expected(void) {
 
 void failed_platform(const char *file, int line) {
     assert_hit = true;
+    if (!assert_get_expected()) {
+        printf("\n\nunexpected assert hit at %s:%d\n", file, line);
+    }
     CHECK_TRUE(assert_get_expected());
-    TEST_EXIT; // NOTE: this ends the test; no checks can come after
+    TEST_EXIT; // NOTE: this ends the test; no checks are run afterwards!
 }
