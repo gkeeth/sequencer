@@ -81,7 +81,14 @@ void tempo_to_period_and_prescaler(uint32_t tenths_of_bpm, uint32_t *period, uin
     *period = prescaled_clock * 60U * 10U / tenths_of_bpm;
 }
 
-// TODO: needs comment
+/*
+ * convert a duty cycle percentage to a PWM compare register value.
+ *
+ * - period: timer period in clock cycles, without -1 offset.
+ * - duty_percent: duty cycle in percent
+ *
+ * returns PWM compare register value (number of clock cycles), without -1 offset
+ */
 uint32_t duty_to_pwm_compare(uint32_t period, uint32_t duty_percent) {
     ASSERT(duty_percent <= 100U);
     if (duty_percent) {
