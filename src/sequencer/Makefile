@@ -30,6 +30,7 @@ TEST_CPPFLAGS += -g -O0
 # TODO: add warning flags for test and target
 
 CSTD = -std=c17
+TGT_CXXFLAGS += -Wconversion
 
 # command line args for test binary
 CPPUTEST_FLAGS = -c
