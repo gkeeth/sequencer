@@ -93,13 +93,6 @@ $(TEST_TARGET):	$(TEST_DEPS)
 test: $(TEST_TARGET)
 	./$(TEST_TARGET) $(CPPUTEST_FLAGS)
 
-# generate compile_commands.json (for language server)
-.PHONY: compile_commands
-compile_commands:
-	rm -f compile_commands.json
-	bear -- make --always-make $(TEST_TARGET) $(PROJECT).bin
-	# bear --append -- make --always-make -C ../libopencm3 TARGETS='stm32/f0'
-
 .PHONY: print_vars
 print_vars:
 	$(info CC: $(CC))

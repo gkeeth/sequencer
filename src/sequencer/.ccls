@@ -1,0 +1,15 @@
+clang
+%c -std=c17
+%c -Wimplicit-function-declaration -Wstrict-prototypes -Wmissing-prototypes
+%c -I../libopencm3/include
+%cpp -Itest
+%cpp -Itest/mocks
+%cpp -Itest/cpputest/include
+-I.
+-DSTM32F0
+-DSTM32F031K6T6
+-Wall
+-Wextra
+-Wundef
+-Wshadow
+-Wredundant-decls
