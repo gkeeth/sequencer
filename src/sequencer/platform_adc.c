@@ -7,6 +7,7 @@
 #include "platform.h"
 #include "platform_constants.h"
 #include "platform_utils.h"
+#include "utils.h" // for ASSERT()
 
 #include "tempo_and_duty.h" // for updating pot values in ADC ISR
 
@@ -36,14 +37,7 @@ void adc_setup_platform(void) {
     timer_set_period(ADC_TIMER, timer_hz_to_arr(ADC_TRIGGER_RATE_HZ));
     timer_set_master_mode(ADC_TIMER, TIM_CR2_MMS_UPDATE);
 
-    // debug:
-    // nvic_enable_irq(NVIC_TIM3_IRQ);
-    // timer_enable_irq(ADC_TIMER, TIM_DIER_UIE);
-    // rcc_periph_clock_enable(RCC_GPIOA);
-    // gpio_mode_setup(GPIOA, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO12);
-
     adc_enable_external_trigger_regular(ADC1, ADC_TIMER_TRIGGER, ADC_CFGR1_EXTEN_RISING_EDGE);
-    // adc_disable_external_trigger_regular(ADC1);
 
     adc_enable_eoc_interrupt(ADC1);
     adc_enable_overrun_interrupt(ADC1);
@@ -91,7 +85,7 @@ void adc_comp_isr(void) {
         // Theoretically it might be better to recover from overrun (reset the
         // conversions and start fresh), but it should never happen so it's
         // better to find out if that assumption is wrong and fix the design
-        // ASSERT(!adc_get_overrun_flag(ADC1));
+        ASSERT(!adc_get_overrun_flag(ADC1));
 
         if (adc_eos(ADC1)) {
             update_duty_value((uint16_t) adc_read_regular(ADC1));

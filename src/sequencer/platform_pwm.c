@@ -26,10 +26,6 @@
  *                               // level
  * 5. led_setup(period_ns)
  * 6. seq_clock_setup(period_ms)
- *
- * TODO: this API would be better if you just specified a BPM and it calculated
- * an appropriate PSC/ARR that minimized tempo and PWM error, or at least kept
- * it approximately constant across tempo, rather than increasing with tempo.
  */
 
 static bool pwm_allowed_timer(uint32_t timer_peripheral);
@@ -113,9 +109,6 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
     }
 
     pwm_set_single_timer_platform(timer_peripheral, period, prescaler, pwm_compare);
-#if 0
-    pwm_set_single_timer_platform(timer_peripheral, period_ms, duty);
-#endif
 
     // initialize all registers by triggering an UG event
     timer_generate_event(timer_peripheral, TIM_EGR_UG);
@@ -149,7 +142,6 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral,
     ASSERT(pwm_compare - 1U <= UINT16_MAX);
     uint16_t ccr = pwm_compare - 1U;
 
-    // CCR = (ARR + 1) * (duty fraction)
     uint32_t timer_output_channel;
     if (timer_peripheral == SEQCLKOUT_TIMER) {
         timer_output_channel = SEQCLKOUT_TIM_OC;
