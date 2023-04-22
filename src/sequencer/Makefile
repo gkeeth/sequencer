@@ -28,9 +28,9 @@ TEST_LDLIBS += -L$(CPPUTEST_HOME)/build/lib -lCppUTest -lCppUTestExt
 TEST_TARGET = $(PROJECT)_tests
 TEST_CPPFLAGS += -g -O0
 TEST_CPPFLAGS += -fno-common
-TEST_CPPFLAGS += -Wextra -Wshadow -Wconversion -Wredundant-decls
+TEST_CPPFLAGS += -Wextra -Wshadow -Wconversion
 TEST_CFLAGS   += -Wno-unused-variable -Wimplicit-function-declaration
-TEST_CFLAGS   += -Wstrict-prototypes -Wmissing-prototypes
+TEST_CFLAGS   += -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls
 
 CSTD = -std=c17
 

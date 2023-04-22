@@ -16,7 +16,7 @@ TEST(switch_testgroup, skip_reset_switch_initially_skip) {
 }
 
 TEST(switch_testgroup, step_switch_initially_play) {
-    for (int i = 0; i < NUM_STEPS; ++i) {
+    for (unsigned i = 0; i < NUM_STEPS; ++i) {
         CHECK_EQUAL(SWITCH_STEP_PLAY, get_step_switch(i + 1));
     }
 }

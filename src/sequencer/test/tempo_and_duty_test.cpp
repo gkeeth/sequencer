@@ -25,7 +25,7 @@ TEST_GROUP(tempo_and_duty_testgroup) {
     }
 
     void check_block(uint8_t block_size, uint16_t expected_average) {
-        for (int i = 0; i < block_size - 1; i++) {
+        for (uint8_t i = 0; i < block_size - 1; i++) {
             update_duty_value(i * 1000);
             update_tempo_value(i * 1000);
             CHECK_EQUAL(expected_average, get_duty_pot_value());

@@ -34,7 +34,7 @@ static uint32_t get_debounced_switch_values(void) {
 }
 
 // returns debounced switch status for step
-step_switch_t get_step_switch(uint8_t step) {
+step_switch get_step_switch(uint32_t step) {
     ASSERT((step >= 1) && (step <= NUM_STEPS));
 
     uint32_t debounced = get_debounced_switch_values();
@@ -42,7 +42,7 @@ step_switch_t get_step_switch(uint8_t step) {
 }
 
 // returns debounced skip/reset switch status
-skip_reset_switch_t get_skip_reset_switch(void) {
+skip_reset_switch get_skip_reset_switch(void) {
     uint32_t debounced = get_debounced_switch_values();
     return !!(debounced & (0x1 << NUM_STEPS));
 }
