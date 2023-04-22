@@ -24,7 +24,7 @@ TEST_GROUP(platform_utils_testgroup) {
         FAIL("did not hit expected assert in timer_ms_to_arr");
     }
 
-    void duty_to_pwm_compare_assert(uint32_t period, uint32_t duty_percent) {
+    void duty_to_pwm_compare_expect_assert(uint32_t period, uint32_t duty_percent) {
         assert_fake_setup(true);
         duty_to_pwm_compare(period, duty_percent);
         FAIL("did not hit expected assert in duty_to_pwm_compare");
@@ -37,6 +37,12 @@ TEST_GROUP(platform_utils_testgroup) {
         assert_fake_setup(true);
         tempo_to_period_and_prescaler(tenths_of_bpm, &dummy_period, &dummy_prescaler);
         FAIL("did not hit expected assert in tempo_to_period_and_prescaler");
+    }
+
+    void timer_hz_to_arr_expect_assert(uint32_t frequency_hz) {
+        assert_fake_setup(true);
+        timer_hz_to_arr(frequency_hz);
+        FAIL("did not hit expected assert in timer_hz_to_arr");
     }
 };
 
@@ -89,8 +95,8 @@ TEST(platform_utils_testgroup, tempo_to_period_and_prescaler_ranges) {
 
     for (size_t i = 0; i < sizeof(bpms) / sizeof(bpms[0]); ++i) {
         tempo_to_period_and_prescaler(bpms[i], &period, &prescaler);
-        uint32_t bpm = (uint64_t) SYSCLK_FREQ_HZ * 60U * 10U / (prescaler * period);
-        CHECK_EQUAL(bpms[i], bpm);
+        uint64_t bpm = ((uint64_t) SYSCLK_FREQ_HZ) * 60U * 10U / (prescaler * period);
+        CHECK_EQUAL(bpms[i], (uint32_t) bpm);
     }
 }
 
@@ -117,11 +123,25 @@ TEST(platform_utils_testgroup, duty_to_pwm_compare_correct_calculation) {
 }
 
 TEST(platform_utils_testgroup, duty_to_pwm_compare_assert_duty_too_large) {
-    duty_to_pwm_compare_assert(1000, 101);
+    duty_to_pwm_compare_expect_assert(1000, 101);
 }
 
 TEST(platform_utils_testgroup, duty_to_pwm_compare_assert_period_too_large) {
-    duty_to_pwm_compare_assert(UINT32_MAX, 2);
+    duty_to_pwm_compare_expect_assert(UINT32_MAX, 2);
 }
 
 
+// timer_hz_to_arr()
+TEST(platform_utils_testgroup, timer_hz_to_arr_conversion) {
+    CHECK_EQUAL(0, timer_hz_to_arr(SYSCLK_FREQ_HZ));
+    CHECK_EQUAL(999, timer_hz_to_arr(SYSCLK_FREQ_HZ / 1000));
+    CHECK_EQUAL(65483, timer_hz_to_arr(733));
+}
+
+TEST(platform_utils_testgroup, timer_hz_to_arr_nonzero_frequency_assertion) {
+    timer_hz_to_arr_expect_assert(0);
+}
+
+TEST(platform_utils_testgroup, timer_hz_to_arr_result_size_assertion) {
+    timer_hz_to_arr_expect_assert(732);
+}

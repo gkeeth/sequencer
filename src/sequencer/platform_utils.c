@@ -30,16 +30,24 @@ uint16_t timer_ms_to_arr(uint32_t period_ms, uint32_t prescaler) {
     // now check that it'll fit into a 16-bit register
     ASSERT(arr <= UINT16_MAX);
 
-    return arr;
+    return (uint16_t) arr;
 }
 
 /*
- * Calculate ARR value for desired output frequency in hertz.
+ * Calculate ARR value for desired output frequency in hertz. Assumes no
+ * prescaler.
+ *
+ * Asserts that frequency_hz is nonzero and also large enough for the
+ * calculated ARR value to fit into a 16-bit ARR register. Minimum frequency
+ * for a 48MHz system clock with no prescaler is 733Hz.
+ *
  * Returned ARR value includes the -1 offset.
  */
 uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
     ASSERT(frequency_hz != 0);
-    return (SYSCLK_FREQ_MHZ / frequency_hz) - 1;
+    uint32_t ticks = SYSCLK_FREQ_HZ / frequency_hz;
+    ASSERT(ticks < UINT16_MAX + 1);
+    return (uint16_t) (umax(1, ticks) - 1U);
 }
 
 /*
