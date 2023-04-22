@@ -5,9 +5,9 @@
 #define DUTY_READINGS_PER_BLOCK_AVERAGE 16
 
 struct pot {
-    volatile uint16_t last_average;
-    volatile uint8_t num_readings;
-    uint8_t readings_per_block;
+    volatile uint32_t last_average;
+    volatile uint32_t num_readings;
+    uint32_t readings_per_block;
     volatile uint32_t running_block_total;
 };
 
@@ -26,11 +26,11 @@ void init_pots(void) {
     init_pot(&duty_pot, DUTY_READINGS_PER_BLOCK_AVERAGE);
 }
 
-uint16_t get_tempo_pot_value(void) {
+uint32_t get_tempo_pot_value(void) {
     return tempo_pot.last_average;
 }
 
-uint16_t get_duty_pot_value(void) {
+uint32_t get_duty_pot_value(void) {
     return duty_pot.last_average;
 }
 

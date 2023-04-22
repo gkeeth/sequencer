@@ -61,7 +61,7 @@ int main(void) {
             uart_send_string("tempo (bpm): ");
             uart_send_number((int32_t) tempo_bpm);
             uart_send_string("duty (raw): ");
-            uart_send_number(get_duty_pot_value());
+            uart_send_number((int32_t) get_duty_pot_value());
             uart_send_line("");
 
             last_adc_print_millis = millis();

@@ -29,7 +29,7 @@ void uart_send_number(int32_t number) {
     if (number < 0) {
         uart_send_char('-');
         if (number == INT32_MIN) {
-            buffer[index++] = -1 * (number % 10) + 48;
+            buffer[index++] = (char) (-1 * (number % 10) + 48);
             number /= 10;
         }
         number *= -1;
@@ -40,7 +40,7 @@ void uart_send_number(int32_t number) {
     }
 
     while (number > 0) {
-        buffer[index++] = (number % 10) + 48;
+        buffer[index++] = (char) (number % 10) + 48;
         number /= 10;
     }
 

@@ -68,8 +68,8 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
     uint32_t timer_rcc;
     uint32_t gpio_rcc;
     uint32_t port;
-    uint32_t pin;
-    uint32_t alternate_function;
+    uint16_t pin;
+    uint8_t alternate_function;
     uint32_t timer_output_channel;
 
     if (timer_peripheral == SEQCLKOUT_TIMER) {
@@ -132,15 +132,15 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral,
 
     ASSERT(period);
     ASSERT(period - 1U <= UINT16_MAX);
-    uint16_t arr = period - 1U;
+    uint16_t arr = (uint16_t) (period - 1U);
 
     ASSERT(prescaler);
     ASSERT(prescaler - 1U <= UINT16_MAX);
-    uint16_t psc = prescaler - 1U;
+    uint16_t psc = (uint16_t) (prescaler - 1U);
 
     ASSERT(pwm_compare);
     ASSERT(pwm_compare - 1U <= UINT16_MAX);
-    uint16_t ccr = pwm_compare - 1U;
+    uint16_t ccr = (uint16_t) (pwm_compare - 1U);
 
     uint32_t timer_output_channel;
     if (timer_peripheral == SEQCLKOUT_TIMER) {
