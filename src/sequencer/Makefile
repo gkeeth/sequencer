@@ -27,10 +27,12 @@ TEST_CC = gcc
 TEST_LDLIBS += -L$(CPPUTEST_HOME)/build/lib -lCppUTest -lCppUTestExt
 TEST_TARGET = $(PROJECT)_tests
 TEST_CPPFLAGS += -g -O0
-# TODO: add warning flags for test and target
+TEST_CPPFLAGS += -fno-common
+TEST_CPPFLAGS += -Wextra -Wshadow -Wconversion -Wredundant-decls
+TEST_CFLAGS   += -Wno-unused-variable -Wimplicit-function-declaration
+TEST_CFLAGS   += -Wstrict-prototypes -Wmissing-prototypes
 
 CSTD = -std=c17
-TGT_CXXFLAGS += -Wconversion
 
 # command line args for test binary
 CPPUTEST_FLAGS = -c
