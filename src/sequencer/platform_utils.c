@@ -62,6 +62,7 @@ uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
  * i.e. 1 clock tick.
  */
 uint16_t timer_ns_to_arr(uint32_t period_ns) {
+    ASSERT(period_ns <= UINT32_MAX / SYSCLK_FREQ_MHZ);
     uint32_t ticks = SYSCLK_FREQ_MHZ * period_ns / 1000U;
 
     ASSERT(ticks <= UINT16_MAX + 1)

@@ -170,6 +170,12 @@ TEST(platform_utils_testgroup, timer_ns_to_arr_clamp_to_zero) {
     CHECK_EQUAL(0, timer_ns_to_arr(21)); // not clamped
 }
 
-TEST(platform_utils_testgroup, timer_ns_to_arr_period_assertion) {
+TEST(platform_utils_testgroup, timer_ns_to_arr_period_overflow_assertion) {
+    // careful, this will hit the 16bit assert even if it doesn't hit the
+    // period_ns assert first...
+    timer_ns_to_arr_expect_assert(89478486);
+}
+
+TEST(platform_utils_testgroup, timer_ns_to_arr_period_16bit_assertion) {
     timer_ns_to_arr_expect_assert(1365355);
 }
