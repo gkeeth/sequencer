@@ -44,6 +44,12 @@ TEST_GROUP(platform_utils_testgroup) {
         timer_hz_to_arr(frequency_hz);
         FAIL("did not hit expected assert in timer_hz_to_arr");
     }
+
+    void timer_ns_to_arr_expect_assert(uint32_t period_ns) {
+        assert_fake_setup(true);
+        timer_ns_to_arr(period_ns);
+        FAIL("did not hit expected assert in timer_ns_to_arr");
+    }
 };
 
 
@@ -138,10 +144,32 @@ TEST(platform_utils_testgroup, timer_hz_to_arr_conversion) {
     CHECK_EQUAL(65483, timer_hz_to_arr(733));
 }
 
+TEST(platform_utils_testgroup, timer_hz_to_arr_clamp_to_zero) {
+    CHECK_EQUAL(0, timer_hz_to_arr(SYSCLK_FREQ_HZ + 1U)); // clamped
+    CHECK_EQUAL(0, timer_hz_to_arr(SYSCLK_FREQ_HZ)); // not clamped
+}
+
 TEST(platform_utils_testgroup, timer_hz_to_arr_nonzero_frequency_assertion) {
     timer_hz_to_arr_expect_assert(0);
 }
 
 TEST(platform_utils_testgroup, timer_hz_to_arr_result_size_assertion) {
     timer_hz_to_arr_expect_assert(732);
+}
+
+
+// timer_ns_to_arr()
+TEST(platform_utils_testgroup, timer_ns_to_arr_conversion) {
+    CHECK_EQUAL(0, timer_ns_to_arr(21U));
+    CHECK_EQUAL(47, timer_ns_to_arr(1000));
+    CHECK_EQUAL(UINT16_MAX, timer_ns_to_arr(1365354));
+}
+
+TEST(platform_utils_testgroup, timer_ns_to_arr_clamp_to_zero) {
+    CHECK_EQUAL(0, timer_ns_to_arr(0)); // clamped
+    CHECK_EQUAL(0, timer_ns_to_arr(21)); // not clamped
+}
+
+TEST(platform_utils_testgroup, timer_ns_to_arr_period_assertion) {
+    timer_ns_to_arr_expect_assert(1365355);
 }

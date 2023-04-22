@@ -34,19 +34,21 @@ uint16_t timer_ms_to_arr(uint32_t period_ms, uint32_t prescaler) {
 }
 
 /*
- * Calculate ARR value for desired output frequency in hertz. Assumes no
- * prescaler.
+ * convert desired output frequency in hertz to a value for a timer's ARR
+ * register, including the -1 offset. A prescaler value of 0 (no prescaler) is
+ * assumed.
  *
  * Asserts that frequency_hz is nonzero and also large enough for the
  * calculated ARR value to fit into a 16-bit ARR register. Minimum frequency
  * for a 48MHz system clock with no prescaler is 733Hz.
  *
- * Returned ARR value includes the -1 offset.
+ * Returned ARR value includes the -1 offset, and is clamped to a minimum of 0,
+ * i.e. 1 clock tick.
  */
 uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
     ASSERT(frequency_hz != 0);
     uint32_t ticks = SYSCLK_FREQ_HZ / frequency_hz;
-    ASSERT(ticks < UINT16_MAX + 1);
+    ASSERT(ticks <= UINT16_MAX + 1);
     return (uint16_t) (umax(1, ticks) - 1U);
 }
 
@@ -55,11 +57,15 @@ uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
  * including the -1 offset. A prescaler value of 0 (no prescaler) is assumed.
  *
  * The maximum allowable period is UINT16_MAX / SYSCLK_FREQ_MHZ / 1000
+ *
+ * Returned ARR value includes the -1 offset, and is clamped to a minimum of 0,
+ * i.e. 1 clock tick.
  */
 uint16_t timer_ns_to_arr(uint32_t period_ns) {
-    // TODO: implement
-    (void) period_ns;
-    return 0;
+    uint32_t ticks = SYSCLK_FREQ_MHZ * period_ns / 1000U;
+
+    ASSERT(ticks <= UINT16_MAX + 1)
+    return (uint16_t) (umax(ticks, 1) - 1);
 }
 
 /*
