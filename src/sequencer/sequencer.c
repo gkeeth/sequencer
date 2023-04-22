@@ -8,20 +8,6 @@
 #include "pwm.h"
 #include "utils.h"
 
-#define NS_PER_S 1000000000
-
-uint32_t bpm_to_ns(uint32_t bpm);
-uint32_t bpm_to_ns(uint32_t bpm) {
-    // ASSERT(bpm > 28); // prevent divide-by-zero or overflow
-    ASSERT(bpm > 14); // prevent divide-by-zero or overflow
-    return 1000 * 60 / bpm * 1000 * 1000;
-}
-uint32_t bpm_to_ms(uint32_t bpm);
-uint32_t bpm_to_ms(uint32_t bpm) {
-    ASSERT(bpm > 0);
-    return 1000 * 60 / bpm;
-}
-
 static void setup(void) {
     clock_setup();
 
