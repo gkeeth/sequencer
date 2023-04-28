@@ -1,4 +1,6 @@
+#include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
 
@@ -45,10 +47,9 @@ void pwm_setup_platform(void) {
     clk_pwm_compare = duty_to_pwm_compare(clk_period, duty_percent);
     pwm_setup_single_timer(SEQCLKOUT_TIMER, clk_period, clk_prescaler, clk_pwm_compare);
 
-    // TODO: make some functions that do this for us
-    uint32_t leds_period = SYSCLK_FREQ_HZ / 10000U;
+    uint32_t leds_period = LED_RESET_ARR + 1U;
     uint32_t leds_prescaler = 1;
-    uint32_t leds_pwm_compare = leds_period * 80U / 100U;
+    uint32_t leds_pwm_compare = 2;
     pwm_setup_single_timer(LEDS_TIMER, leds_period, leds_prescaler, leds_pwm_compare);
 }
 
@@ -97,8 +98,7 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
     timer_set_oc_mode(timer_peripheral, timer_output_channel, TIM_OCM_PWM1);
     // set OCxPE bit in TIMx_CCMRx
     timer_enable_oc_preload(timer_peripheral, timer_output_channel);
-    // TODO: set set ARPE in CR1 register to enable auto-reload preload register?
-    // timer_enable_preload(timer_peripheral);
+    timer_enable_preload(timer_peripheral);
     // set or clear CCxP bit in CCER
     timer_set_oc_polarity_high(timer_peripheral, timer_output_channel);
     // set CCxE bit in TIMx_CCER
@@ -108,9 +108,29 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
         timer_enable_break_main_output(timer_peripheral);
     }
 
+    if (timer_peripheral == LEDS_TIMER) {
+        /*
+        nvic_enable_irq(LEDS_TIM_IRQ);
+        timer_enable_irq(LEDS_TIMER, TIM_DIER_UIE);
+        */
+        // TODO: eventually set this as a DMA burst operation
+        dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) LEDS_TIM_CCR);
+        dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, 0); // TODO: change this to something real
+        dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, 9U * 16U);
+        dma_set_priority(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PL_VERY_HIGH);
+        dma_set_read_from_memory(LEDS_DMA, LEDS_DMA_CHANNEL);
+        dma_enable_circular_mode(LEDS_DMA, LEDS_DMA_CHANNEL); // TODO: this may be wrong?
+        dma_enable_memory_increment_mode(LEDS_DMA, LEDS_DMA_CHANNEL);
+        dma_disable_peripheral_increment_mode(LEDS_DMA, LEDS_DMA_CHANNEL);
+        dma_set_memory_size(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_MSIZE_32BIT);
+        dma_set_peripheral_size(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PSIZE_32BIT);
+        timer_set_dma_on_update_event(timer_peripheral);
+        dma_enable_channel(LEDS_DMA, LEDS_DMA_CHANNEL); // TODO: this may need to be after enabling the counter
+    }
+
     pwm_set_single_timer_platform(timer_peripheral, period, prescaler, pwm_compare);
 
-    // initialize all registers by triggering an UG event
+    // initialize shadow registers by triggering an UG event
     timer_generate_event(timer_peripheral, TIM_EGR_UG);
 
     timer_enable_counter(timer_peripheral);

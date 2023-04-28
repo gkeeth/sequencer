@@ -17,6 +17,8 @@ static void setup(void) {
     init_pots();
     pwm_setup();
     pwm_set_tempo_and_duty(1200, 50);
+
+    setup_led_dma();
 }
 
 int main(void) {
