@@ -1,4 +1,6 @@
 target remote localhost:3333
+set pagination off
+set confirm off
 monitor reset halt
 monitor reset init
 set remote hardware-breakpoint-limit 4
