@@ -6,6 +6,7 @@
 #include "uart.h"
 #include "tempo_and_duty.h"
 #include "pwm.h"
+#include "step_leds.h"
 #include "utils.h"
 
 static void setup(void) {
@@ -13,7 +14,7 @@ static void setup(void) {
 
     led_setup();
     uart_setup();
-    adc_setup();
+    // adc_setup();
     init_pots();
     pwm_setup();
     pwm_set_tempo_and_duty(1200, 50);
@@ -22,14 +23,14 @@ static void setup(void) {
 }
 
 int main(void) {
-    uint32_t last_flash_millis;
-    uint32_t last_adc_print_millis;
     const uint32_t BLINK_DELAY = 500;
     const uint32_t ADC_PRINT_DELAY = 800;
+    const uint32_t STEP_DELAY = 500;
 
     setup();
-    last_flash_millis = millis();
-    last_adc_print_millis = millis();
+    uint32_t last_flash_millis = millis();
+    uint32_t last_adc_print_millis = last_flash_millis;
+    uint32_t last_step_millis = last_flash_millis;
 
     while (1) {
         if ((millis() - last_flash_millis) > BLINK_DELAY) {
@@ -54,6 +55,12 @@ int main(void) {
 
             last_adc_print_millis = millis();
         }
+
+        if ((millis() - last_step_millis) > STEP_DELAY) {
+            led_enable_dma();
+            last_step_millis = millis();
+        }
+
 
         pwm_set_tempo_and_duty(tempo_bpm_tenths, duty_percent);
 
