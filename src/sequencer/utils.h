@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 void failed(const char *file, int line);
 #define ASSERT(expr) if (expr) {} else failed(__FILE__, __LINE__);
@@ -15,5 +16,8 @@ int32_t map_range(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, in
 uint32_t umap_range(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_min, uint32_t out_max);
 
 void swap_u32(uint32_t *a, uint32_t *b);
+
+// check if bit (0-indexed) is set in word
+bool bit_set(uint32_t word, uint32_t bit);
 
 #endif // UTILS_H

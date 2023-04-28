@@ -67,3 +67,6 @@ void swap_u32(uint32_t *a, uint32_t *b) {
     *b = temp;
 }
 
+bool bit_set(uint32_t word, uint32_t bit) {
+    return !!(word & (0x1 << bit));
+}

@@ -80,3 +80,12 @@ TEST(utils_testgroup, map_reversed_range) {
     CHECK_EQUAL(0, map_range(0, 1, -1, -5, 5));
     CHECK_EQUAL(5, map_range(-1, 1, -1, -5, 5));
 }
+
+TEST(utils_testgroup, bit_set) {
+    CHECK_FALSE(bit_set(0x0, 0));
+    CHECK_TRUE(bit_set(0x1, 0));
+    CHECK_FALSE(bit_set(0x1, 1));
+    CHECK_TRUE(bit_set(0x2, 1));
+    CHECK_TRUE(bit_set(0xFFFFFFFF, 0));
+    CHECK_TRUE(bit_set(0xFFFFFFFF, 31));
+}
