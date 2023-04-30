@@ -1,6 +1,8 @@
 #ifndef PLATFORM_CONSTANTS_H
 #define PLATFORM_CONSTANTS_H
 
+// TODO: replace a lot of these with stringification
+
 /* #define NUM_STEPS 8U */
 #define NUM_STEPS 1U
 
@@ -21,9 +23,11 @@
 #define ADC_CHANNEL_DUTY 8
 #define ADC_CHANNEL_TEMPO 9
 #define RCC_ADC_TIMER RCC_TIM3
+#define ADC_DBG_TIM_STOP DBG_TIM3_STOP
 #define ADC_TIMER TIM3
 #define ADC_TIMER_TRIGGER ADC_CFGR1_EXTSEL_TIM3_TRGO
 #define ADC_TRIGGER_RATE_HZ 1000U
+#define ADC_BLOCK_SIZE 16U
 
 #define PORT_STATUS_LED GPIOA
 #define PIN_STATUS_LED GPIO15

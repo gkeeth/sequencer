@@ -3,6 +3,7 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/adc.h>
+#include <libopencm3/stm32/dbgmcu.h>
 
 #include "platform.h"
 #include "platform_constants.h"
@@ -15,6 +16,7 @@
  * set up ADC peripheral to read from duty and tempo potentiometers
  */
 void adc_setup_platform(void) {
+    DBGMCU_CR |= ADC_DBG_TIM_STOP; // don't trigger ADC timer while debugging
     rcc_periph_clock_enable(RCC_ADC_GPIO);
     rcc_periph_clock_enable(RCC_ADC);
 
