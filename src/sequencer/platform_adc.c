@@ -41,20 +41,24 @@ void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]) {
 
     adc_enable_external_trigger_regular(ADC1, ADC_TIMER_TRIGGER, ADC_CFGR1_EXTEN_RISING_EDGE);
 
+    // configure DMA to grab ADC results into a circular buffer
     rcc_periph_clock_enable(RCC_ADC_DMA);
     dma_set_peripheral_address(ADC_DMA, ADC_DMA_CHANNEL, ADC_DR_ADDRESS);
     dma_set_memory_address(ADC_DMA, ADC_DMA_CHANNEL, (uint32_t) buffer);
-    dma_set_number_of_data(ADC_DMA, ADC_DMA_CHANNEL, 2*ADC_BLOCK_SIZE);
+    dma_set_number_of_data(ADC_DMA, ADC_DMA_CHANNEL, ADC_BUFFER_SIZE);
     dma_set_priority(ADC_DMA, ADC_DMA_CHANNEL, DMA_CCR_PL_VERY_HIGH);
     dma_set_read_from_peripheral(ADC_DMA, ADC_DMA_CHANNEL);
     dma_enable_memory_increment_mode(ADC_DMA, ADC_DMA_CHANNEL);
-    dma_disable_memory_increment_mode(ADC_DMA, ADC_DMA_CHANNEL);
+    dma_disable_peripheral_increment_mode(ADC_DMA, ADC_DMA_CHANNEL);
     dma_enable_circular_mode(ADC_DMA, ADC_DMA_CHANNEL);
     dma_set_memory_size(ADC_DMA, ADC_DMA_CHANNEL, DMA_CCR_MSIZE_16BIT);
     dma_set_peripheral_size(ADC_DMA, ADC_DMA_CHANNEL, DMA_CCR_PSIZE_16BIT);
     dma_enable_half_transfer_interrupt(ADC_DMA, ADC_DMA_CHANNEL);
     dma_enable_transfer_complete_interrupt(ADC_DMA, ADC_DMA_CHANNEL);
     nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ); // calculate block averages
+    adc_enable_dma_circular_mode(ADC1);
+    adc_enable_dma(ADC1);
+    dma_enable_channel(ADC_DMA, ADC_DMA_CHANNEL);
 
     adc_set_right_aligned(ADC1);
     adc_set_sample_time_on_all_channels(ADC1, ADC_SMPTIME_071DOT5);

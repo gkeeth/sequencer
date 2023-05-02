@@ -14,7 +14,7 @@ static void setup(void) {
 
     led_setup();
     uart_setup();
-    // adc_setup();
+    adc_setup();
     init_pots();
     pwm_setup();
     pwm_set_tempo_and_duty(1200, 50);
