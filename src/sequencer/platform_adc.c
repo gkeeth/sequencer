@@ -1,12 +1,12 @@
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/adc.h>
 #include <libopencm3/stm32/dbgmcu.h>
 
 #include "platform.h"
-#include "platform_constants.h"
 #include "platform_utils.h"
 #include "utils.h" // for ASSERT()
 
@@ -15,7 +15,7 @@
 /*
  * set up ADC peripheral to read from duty and tempo potentiometers
  */
-void adc_setup_platform(void) {
+void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]) {
     DBGMCU_CR |= ADC_DBG_TIM_STOP; // don't trigger ADC timer while debugging
     rcc_periph_clock_enable(RCC_ADC_GPIO);
     rcc_periph_clock_enable(RCC_ADC);
@@ -41,9 +41,20 @@ void adc_setup_platform(void) {
 
     adc_enable_external_trigger_regular(ADC1, ADC_TIMER_TRIGGER, ADC_CFGR1_EXTEN_RISING_EDGE);
 
-    adc_enable_eoc_interrupt(ADC1);
-    adc_enable_overrun_interrupt(ADC1);
-    nvic_enable_irq(NVIC_ADC_COMP_IRQ);
+    rcc_periph_clock_enable(RCC_ADC_DMA);
+    dma_set_peripheral_address(ADC_DMA, ADC_DMA_CHANNEL, ADC_DR_ADDRESS);
+    dma_set_memory_address(ADC_DMA, ADC_DMA_CHANNEL, (uint32_t) buffer);
+    dma_set_number_of_data(ADC_DMA, ADC_DMA_CHANNEL, 2*ADC_BLOCK_SIZE);
+    dma_set_priority(ADC_DMA, ADC_DMA_CHANNEL, DMA_CCR_PL_VERY_HIGH);
+    dma_set_read_from_peripheral(ADC_DMA, ADC_DMA_CHANNEL);
+    dma_enable_memory_increment_mode(ADC_DMA, ADC_DMA_CHANNEL);
+    dma_disable_memory_increment_mode(ADC_DMA, ADC_DMA_CHANNEL);
+    dma_enable_circular_mode(ADC_DMA, ADC_DMA_CHANNEL);
+    dma_set_memory_size(ADC_DMA, ADC_DMA_CHANNEL, DMA_CCR_MSIZE_16BIT);
+    dma_set_peripheral_size(ADC_DMA, ADC_DMA_CHANNEL, DMA_CCR_PSIZE_16BIT);
+    dma_enable_half_transfer_interrupt(ADC_DMA, ADC_DMA_CHANNEL);
+    dma_enable_transfer_complete_interrupt(ADC_DMA, ADC_DMA_CHANNEL);
+    nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ); // calculate block averages
 
     adc_set_right_aligned(ADC1);
     adc_set_sample_time_on_all_channels(ADC1, ADC_SMPTIME_071DOT5);
@@ -67,11 +78,11 @@ void adc_setup_platform(void) {
  * (either low to high or high to low, depending on order given to
  * adc_set_regular_sequence())
  */
-void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions) {
+void adc_convert_platform(uint16_t *buf, uint32_t num_conversions) {
     adc_start_conversion_regular(ADC1);
     for (uint32_t n = 0; n < num_conversions; ++n) {
         while (!adc_eoc(ADC1));
-        buffer[n] = (uint16_t) adc_read_regular(ADC1);
+        buf[n] = (uint16_t) adc_read_regular(ADC1);
     }
 }
 
@@ -89,11 +100,28 @@ void adc_comp_isr(void) {
         // better to find out if that assumption is wrong and fix the design
         ASSERT(!adc_get_overrun_flag(ADC1));
 
-        if (adc_eos(ADC1)) {
-            update_duty_value((uint16_t) adc_read_regular(ADC1));
-            adc_clear_eoc_sequence_flag(ADC1);
+        static uint16_t last_tempo_reading = 0;
+        static uint16_t last_duty_reading = 0;
+        static size_t index = 0;
+        if (!adc_eos(ADC1)) {
+            last_tempo_reading = (uint16_t) adc_read_regular(ADC1);
         } else {
-            update_tempo_value((uint16_t) adc_read_regular(ADC1));
+            last_duty_reading = (uint16_t) adc_read_regular(ADC1);
+            adc_clear_eoc_sequence_flag(ADC1);
+            update_values(last_tempo_reading, last_duty_reading, index);
+            index = (index + 1) % ADC_BLOCK_SIZE;
         }
     }
+}
+
+void dma1_channel1_isr(void) {
+    if (dma_get_interrupt_flag(ADC_DMA, ADC_DMA_CHANNEL, DMA_HTIF)) {
+        dma_clear_interrupt_flags(ADC_DMA, ADC_DMA_CHANNEL, DMA_HTIF);
+        set_buffer_first_half_full(true);
+    } else if (dma_get_interrupt_flag(ADC_DMA, ADC_DMA_CHANNEL, DMA_TCIF)) {
+        dma_clear_interrupt_flags(ADC_DMA, ADC_DMA_CHANNEL, DMA_TCIF);
+        set_buffer_first_half_full(false);
+    }
+
+    calculate_block_averages();
 }

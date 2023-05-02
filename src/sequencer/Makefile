@@ -34,6 +34,7 @@ TEST_CFLAGS   += -Wno-unused-variable -Wimplicit-function-declaration
 TEST_CFLAGS   += -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls
 
 CSTD = -std=c17
+CXXSTD = -std=c++20
 
 # command line args for test binary
 CPPUTEST_FLAGS = -c

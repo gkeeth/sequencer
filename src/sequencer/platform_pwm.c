@@ -114,7 +114,7 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
         timer_enable_irq(LEDS_TIMER, TIM_DIER_UIE);
         */
         // TODO: eventually set this as a DMA burst operation
-        dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) LEDS_TIM_CCR);
+        dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
         dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, 0); // TODO: change this to something real
         dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, 9U * 16U);
         dma_set_priority(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PL_VERY_HIGH);

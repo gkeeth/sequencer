@@ -10,7 +10,7 @@ extern "C" {
 TEST_GROUP(tempo_and_duty_testgroup) {
     void setup(void) {
         init_pots();
-        adc_setup_platform();
+        adc_setup_platform(nullptr);
     }
 
     /*
@@ -21,8 +21,7 @@ TEST_GROUP(tempo_and_duty_testgroup) {
         for (uint16_t i = 0; i < ADC_BLOCK_SIZE; i++) {
             CHECK_EQUAL(expected_average0, get_duty_pot_value());
             CHECK_EQUAL(expected_average0, get_tempo_pot_value());
-            update_duty_value(i * 1000, i);
-            update_tempo_value(i * 1000, i);
+            update_values(i * 1000, i * 1000, i);
         }
         CHECK_EQUAL(expected_average1, get_duty_pot_value());
         CHECK_EQUAL(expected_average1, get_tempo_pot_value());
@@ -44,9 +43,10 @@ TEST(tempo_and_duty_testgroup, block_average_correct) {
 
 TEST(tempo_and_duty_testgroup, no_overflow) {
     for (uint32_t i = 0; i < ADC_BLOCK_SIZE; i++) {
-        update_duty_value(UINT16_MAX, i);
+        update_values(UINT16_MAX, UINT16_MAX, i);
     }
     CHECK_EQUAL(UINT16_MAX, get_duty_pot_value());
+    CHECK_EQUAL(UINT16_MAX, get_tempo_pot_value());
 }
 
 TEST(tempo_and_duty_testgroup, read_pot_values) {

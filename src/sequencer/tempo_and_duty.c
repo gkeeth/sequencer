@@ -4,97 +4,88 @@
 #include "utils.h" // for ASSERT()
 
 
-struct pot{
-    volatile uint16_t buffer[2*ADC_BLOCK_SIZE];
-    volatile uint32_t last_average;
-    volatile bool first_half_full;
-};
+static volatile uint16_t adc_buffer[ADC_BUFFER_SIZE] = {0};
+static volatile bool first_half_full = false;
+static volatile uint32_t last_duty_average = 0;
+static volatile uint32_t last_tempo_average = 0;
 
-static pot tempo_pot;
-static pot duty_pot;
-
-void init_pot(pot *p) {
-    p->last_average = 0;
-    p->first_half_full = false;
-    for (size_t i = 0; i < ADC_BLOCK_SIZE; ++i) {
-        p->buffer[i] = 0;
-    }
-}
 
 void init_pots(void) {
-    init_pot(&tempo_pot);
-    init_pot(&duty_pot);
-}
-
-uint32_t get_tempo_pot_value(void) {
-    return tempo_pot.last_average;
+    last_duty_average = 0;
+    last_tempo_average = 0;
+    first_half_full = false;
+    for (size_t i = 0; i < ADC_BUFFER_SIZE; ++i) {
+        adc_buffer[i] = 0;
+    }
 }
 
 uint32_t get_duty_pot_value(void) {
-    return duty_pot.last_average;
+    return last_duty_average;
 }
 
+uint32_t get_tempo_pot_value(void) {
+    return last_tempo_average;
+}
 
 /*
- * calculate the block average for the valid half of p's buffer
- *
- * returns the new average and updates p's stored average.
+ * calculate the block averages for the valid half of the tempo and duty buffers
  */
-static uint32_t calculate_block_average(pot *p) {
-    uint32_t total = 0;
-    size_t start = !(p->first_half_full) * ADC_BLOCK_SIZE;
+void calculate_block_averages(void) {
+    uint32_t tempo_total = 0;
+    uint32_t duty_total = 0;
+    size_t start = !first_half_full * 2U * ADC_BLOCK_SIZE;
     for (size_t i = 0; i < ADC_BLOCK_SIZE; ++i) {
-        total += p->buffer[i + start];
+        tempo_total += adc_buffer[2*i + start];
+        duty_total += adc_buffer[2*i + 1 + start];
     }
 
-    p->last_average = total / ADC_BLOCK_SIZE;
-    return p->last_average;
+    last_tempo_average = tempo_total / ADC_BLOCK_SIZE;
+    last_duty_average = duty_total / ADC_BLOCK_SIZE;
 }
 
 /*
  * toggles valid buffer flag from 0 to 1, or vice versa
  */
-static void update_target_buffer_flag(pot *p) {
-    p->first_half_full = !p->first_half_full;
+void toggle_target_buffer_flag(void) {
+    first_half_full = !first_half_full;
 }
 
-/* add a single reading to a pot's buffer. If this reading completes a block,
- * calculate the block average.
+void set_buffer_first_half_full(bool full) {
+    first_half_full = full;
+}
+
+/* add a single tempo and duty reading to the pot buffer. If this reading
+ * completes a block, calculate the block average.
  *
  * NOTE: this is mostly for testing; DMA is expected to be used instead of this
  * function.
  *
- * - p: pointer to the pot structure to be updated
- * - reading: value of the new reading
- * - reading_number: the reading's index in the buffer, from 0-(ADC_BLOCK_SIZE-1)
+ * - tempo_reading: value of new tempo reading
+ *   duty_reading: value of new duty reading
+ * - reading_number: the reading's index in the buffer, from 0 to (ADC_BLOCK_SIZE-1)
  */
-static void update_value(pot *p, uint16_t reading, size_t reading_number) {
+void update_values(uint16_t tempo_reading, uint16_t duty_reading, size_t reading_number) {
     ASSERT(reading_number < ADC_BLOCK_SIZE);
-    p->buffer[reading_number + p->first_half_full * ADC_BLOCK_SIZE] = reading;
+    size_t start = first_half_full * 2U * ADC_BLOCK_SIZE;
+    adc_buffer[2 * reading_number + start] = tempo_reading;
+    adc_buffer[2 * reading_number + start + 1] = duty_reading;
     if (reading_number == ADC_BLOCK_SIZE - 1U) {
-        update_target_buffer_flag(p);
-        calculate_block_average(p);
+        toggle_target_buffer_flag();
+        calculate_block_averages();
     }
 }
 
-void update_duty_value(uint16_t reading, size_t index) {
-    update_value(&duty_pot, reading, index);
-}
-
-void update_tempo_value(uint16_t reading, size_t index) {
-    update_value(&tempo_pot, reading, index);
-}
 
 void adc_setup(void) {
-    adc_setup_platform();
+    adc_setup_platform((uint16_t *) adc_buffer);
 }
 
 /*
  * reads tempo and duty pot values. Does not update rolling average.
  */
 void read_tempo_and_duty_raw(uint16_t *tempo, uint16_t *duty) {
-    uint16_t buffer[2];
-    adc_convert_platform(buffer, 2);
-    *tempo = buffer[0];
-    *duty = buffer[1];
+    uint16_t buf[2];
+    adc_convert_platform(buf, 2);
+    *tempo = buf[0];
+    *duty = buf[1];
 }

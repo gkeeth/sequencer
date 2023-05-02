@@ -68,10 +68,10 @@ void setup_led_dma(void) {
 
     // TODO: eventually set this as a DMA burst operation?
     rcc_periph_clock_enable(RCC_LEDS_DMA);
-    dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) LEDS_TIM_CCR);
+    dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
     dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_buffer);
     dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
-    dma_set_priority(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PL_VERY_HIGH);
+    dma_set_priority(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PL_HIGH);
     dma_set_read_from_memory(LEDS_DMA, LEDS_DMA_CHANNEL);
     dma_enable_memory_increment_mode(LEDS_DMA, LEDS_DMA_CHANNEL);
     dma_disable_peripheral_increment_mode(LEDS_DMA, LEDS_DMA_CHANNEL);
@@ -147,7 +147,7 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
         dma_disable_channel(LEDS_DMA, LEDS_DMA_CHANNEL);
         dma_clear_interrupt_flags(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_TCIF);
 
-        dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) LEDS_TIM_CCR);
+        dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
         dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_buffer);
         dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
 

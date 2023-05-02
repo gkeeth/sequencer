@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "platform_constants.h"
+
 // to allow failed_platform() to be called from cpp code in unit tests
 #ifdef __cplusplus
 #define EXTERNC extern "C"
@@ -18,7 +20,7 @@ void uart_send_char_platform(char c);
 bool uart_check_received_char_platform(void);
 char uart_get_received_char_platform(void);
 
-void adc_setup_platform(void);
+void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]);
 void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions);
 
 void led_setup_platform(void);
