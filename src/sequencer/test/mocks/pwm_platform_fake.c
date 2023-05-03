@@ -1,6 +1,6 @@
 #include "platform.h"
 
-void pwm_setup_platform(void) {
+void pwm_setup_clock_timer_platform(void) {
     return;
 }
 void pwm_set_leds_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare) {

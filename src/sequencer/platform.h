@@ -24,9 +24,11 @@ void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]);
 void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions);
 
 void led_setup_platform(void);
+void leds_enable_dma_platform(void);
 void toggle_board_led_platform(void);
 
-void pwm_setup_platform(void);
+void pwm_setup_leds_timer_platform(uint32_t led_buffer[LED_BUFFER_SIZE]);
+void pwm_setup_clock_timer_platform(void);
 void pwm_set_leds_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare);
 void pwm_set_clock_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare);
 

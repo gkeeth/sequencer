@@ -57,7 +57,7 @@ int main(void) {
         }
 
         if ((millis() - last_step_millis) > STEP_DELAY) {
-            led_enable_dma();
+            leds_enable_dma();
             last_step_millis = millis();
         }
 

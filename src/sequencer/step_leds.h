@@ -8,7 +8,7 @@ void set_first_led(uint8_t red, uint8_t green, uint8_t blue);
 
 void setup_led_dma(void);
 
-void led_enable_dma(void);
+void leds_enable_dma(void);
 void led_set_up_buffer(uint32_t buffer[static LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue);
 

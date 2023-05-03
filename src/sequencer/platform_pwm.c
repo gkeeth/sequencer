@@ -1,3 +1,4 @@
+#include <stddef.h>             // for NULL
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/dma.h>
@@ -8,6 +9,7 @@
 #include "platform_utils.h"
 #include "platform_constants.h"
 #include "utils.h"
+#include "step_leds.h"
 
 /*
  * TODO: need the following functions
@@ -31,39 +33,27 @@
  */
 
 static bool pwm_allowed_timer(uint32_t timer_peripheral);
-static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
-        uint32_t prescaler, uint32_t pwm_compare);
+static void pwm_setup_timer_platform(uint32_t timer_peripheral);
 static void pwm_set_single_timer_platform(uint32_t timer_peripheral,
         uint32_t period, uint32_t prescaler, uint32_t pwm_compare);
 
-void pwm_setup_platform(void) {
-    // TODO: don't hardcode these
-    uint32_t tenths_of_bpm = 1200U;
-    uint32_t clk_period;
-    uint32_t clk_prescaler;
-    uint32_t clk_pwm_compare;
-    uint32_t duty_percent = 50;
-    tempo_to_period_and_prescaler(tenths_of_bpm, &clk_period, &clk_prescaler);
-    clk_pwm_compare = duty_to_pwm_compare(clk_period, duty_percent);
-    pwm_setup_single_timer(SEQCLKOUT_TIMER, clk_period, clk_prescaler, clk_pwm_compare);
+static uint32_t *led_pwm_buffer;
 
-    uint32_t leds_period = LED_RESET_ARR + 1U;
-    uint32_t leds_prescaler = 1;
-    uint32_t leds_pwm_compare = 2;
-    pwm_setup_single_timer(LEDS_TIMER, leds_period, leds_prescaler, leds_pwm_compare);
+void pwm_setup_leds_timer_platform(uint32_t led_buffer[LED_BUFFER_SIZE]) {
+    led_pwm_buffer = led_buffer;
+    pwm_setup_timer_platform(LEDS_TIMER);
+}
+
+void pwm_setup_clock_timer_platform(void) {
+    pwm_setup_timer_platform(SEQCLKOUT_TIMER);
 }
 
 /*
  * Do initial setup for a single timer for PWM
  *
  * - timer_peripheral: timer to configure; can be either SEQCLKOUT_TIMER or LEDS_TIMER
- * - period: pwm period (in clock cycles), without any -1 offset.
- * - prescaler: pwm prescaler (in clock cycles), without any -1 offset. for no prescaler, use 1.
- * - pwm_compare: pwm compare value (in clock cycles), without any -1 offset.
- *
  */
-static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
-        uint32_t prescaler, uint32_t pwm_compare) {
+static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
     ASSERT(pwm_allowed_timer(timer_peripheral));
 
     uint32_t timer_rcc;
@@ -109,37 +99,54 @@ static void pwm_setup_single_timer(uint32_t timer_peripheral, uint32_t period,
     }
 
     if (timer_peripheral == LEDS_TIMER) {
-        /*
-        nvic_enable_irq(LEDS_TIM_IRQ);
-        timer_enable_irq(LEDS_TIMER, TIM_DIER_UIE);
-        */
-        // TODO: eventually set this as a DMA burst operation
+        ASSERT(led_pwm_buffer);
+        rcc_periph_clock_enable(RCC_LEDS_DMA);
         dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
-        dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, 0); // TODO: change this to something real
-        dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, 9U * 16U);
-        dma_set_priority(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PL_VERY_HIGH);
+        dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_pwm_buffer);
+        dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
+        dma_set_priority(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PL_HIGH);
         dma_set_read_from_memory(LEDS_DMA, LEDS_DMA_CHANNEL);
-        dma_enable_circular_mode(LEDS_DMA, LEDS_DMA_CHANNEL); // TODO: this may be wrong?
         dma_enable_memory_increment_mode(LEDS_DMA, LEDS_DMA_CHANNEL);
         dma_disable_peripheral_increment_mode(LEDS_DMA, LEDS_DMA_CHANNEL);
         dma_set_memory_size(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_MSIZE_32BIT);
         dma_set_peripheral_size(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PSIZE_32BIT);
-        timer_set_dma_on_update_event(timer_peripheral);
-        dma_enable_channel(LEDS_DMA, LEDS_DMA_CHANNEL); // TODO: this may need to be after enabling the counter
-    }
+        dma_enable_transfer_complete_interrupt(LEDS_DMA, LEDS_DMA_CHANNEL);
+        nvic_enable_irq(NVIC_DMA1_CHANNEL2_3_DMA2_CHANNEL1_2_IRQ); // TODO: make this a define
 
-    pwm_set_single_timer_platform(timer_peripheral, period, prescaler, pwm_compare);
+        timer_set_dma_on_compare_event(timer_peripheral);
+        timer_enable_irq(timer_peripheral, TIM_DIER_CC2DE);
+
+        timer_set_period(timer_peripheral, LED_DATA_ARR);
+        timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
+
+        led_set_up_buffer(led_pwm_buffer, 0xFF, 0x0, 0x0);
+    } else { // SEQCLKOUT_TIMER
+        uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
+        uint32_t clk_period;
+        uint32_t clk_prescaler;
+        uint32_t clk_pwm_compare;
+        uint32_t duty_percent = 50;
+        tempo_to_period_and_prescaler(tenths_of_bpm, &clk_period, &clk_prescaler);
+        clk_pwm_compare = duty_to_pwm_compare(clk_period, duty_percent);
+        // TODO: replace with calls to timer_set_period, timer_set_oc_value, timer_set_prescaler
+        pwm_set_single_timer_platform(timer_peripheral, clk_period, clk_prescaler, clk_pwm_compare);
+    }
 
     // initialize shadow registers by triggering an UG event
     timer_generate_event(timer_peripheral, TIM_EGR_UG);
 
     timer_enable_counter(timer_peripheral);
+
+    if (timer_peripheral == LEDS_TIMER) {
+        dma_enable_channel(LEDS_DMA, LEDS_DMA_CHANNEL);
+    }
 }
 
 /*
  * set PWM period (ARR) and duty cycle (CCR) for a single timer and output channel.
  * Output channels are hardcoded by SEQCLKOUT_TIM_OC and LEDS_TIM_OC defines.
  * TODO: parameterize the output channels.
+ * TODO: this function may be effectively unused, consider removing
  *
  * - timer_peripheral: libopencm3 timer peripheral, e.g. TIM1
  * - period: PWM period (in clock cycles), without any -1 offset.
@@ -200,3 +207,36 @@ void pwm_set_clock_period_and_duty_platform(uint32_t period, uint32_t prescaler,
     pwm_set_single_timer_platform(SEQCLKOUT_TIMER, period, prescaler, pwm_compare);
 }
 
+void leds_enable_dma_platform(void) {
+    dma_enable_channel(LEDS_DMA, LEDS_DMA_CHANNEL);
+}
+
+/*
+ * when a transfer is complete (all leds have been set for the current step):
+ * 1. disable DMA (will be reenabled when the next step comes around). The CCR
+ *    remains 0 from the last item in the buffer, which acts as the LED reset.
+ * 2. clear the interrupt flag
+ * 3. reset the DMA's memory address to the start of the buffer
+ * 4. set up the buffer for the next step
+ */
+void dma1_channel2_3_dma2_channel1_2_isr(void) {
+    if (dma_get_interrupt_flag(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_TCIF)) {
+        dma_disable_channel(LEDS_DMA, LEDS_DMA_CHANNEL);
+        dma_clear_interrupt_flags(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_TCIF);
+
+        dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
+        dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_pwm_buffer);
+        dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
+
+        uint8_t red, green, blue = 0;
+        static uint32_t next_color = 0;
+        switch (next_color) {
+            default:
+            case 0: red = 0xFF; green = 0x0; blue = 0x0; break;
+            case 1: red = 0x0; green = 0xFF; blue = 0x0; break;
+            case 2: red = 0x0; green = 0x0; blue = 0xFF; break;
+        }
+        next_color = (next_color + 1) % 3;
+        led_set_up_buffer(led_pwm_buffer, red, green, blue);
+    }
+}
