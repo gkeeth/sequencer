@@ -1,7 +1,7 @@
 #include <stdint.h>
 
 #include "sequencer.h"
-#include "clocks.h"
+#include "system_clocks.h"
 #include "led.h"
 #include "uart.h"
 #include "tempo_and_duty.h"

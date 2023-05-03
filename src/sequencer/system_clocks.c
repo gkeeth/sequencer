@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "clocks.h"
+#include "system_clocks.h"
 #include "platform.h"
 
 void clock_setup(void) {
