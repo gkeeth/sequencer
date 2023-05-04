@@ -13,7 +13,14 @@
 #include "tempo_and_duty.h" // for updating pot values in ADC ISR
 
 /*
- * set up ADC peripheral to read from duty and tempo potentiometers
+ * set up ADC peripheral to read from duty and tempo potentiometers.
+ *
+ * Configures a timer to trigger the ADC, and DMA to transfer the readings to
+ * buffer.
+ *
+ * - buffer: receives ADC readings via DMA. The buffer interleaves tempo and
+ *           duty readings, and is also double buffered, so it needs to be
+ *           four times the block size.
  */
 void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]) {
     DBGMCU_CR |= ADC_DBG_TIM_STOP; // don't trigger ADC timer while debugging
@@ -93,9 +100,6 @@ void adc_convert_platform(uint16_t *buf, uint32_t num_conversions) {
 /*
  * when each conversion is completed, read the conversion value and update
  * the block average for the appropriate pot.
- *
- * TODO: it would be better if the update_*_value() functions were configurable
- * callbacks/function pointers.
  */
 void adc_comp_isr(void) {
     if (adc_eoc(ADC1)) {
@@ -112,7 +116,7 @@ void adc_comp_isr(void) {
         } else {
             last_duty_reading = (uint16_t) adc_read_regular(ADC1);
             adc_clear_eoc_sequence_flag(ADC1);
-            update_values(last_tempo_reading, last_duty_reading, index);
+            add_tempo_and_duty_value_to_buffer(last_tempo_reading, last_duty_reading, index);
             index = (index + 1) % ADC_BLOCK_SIZE;
         }
     }
@@ -127,5 +131,5 @@ void dma1_channel1_isr(void) {
         set_buffer_first_half_full(false);
     }
 
-    calculate_block_averages();
+    calculate_tempo_and_duty_block_averages();
 }

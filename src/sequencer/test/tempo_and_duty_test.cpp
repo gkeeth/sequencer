@@ -9,7 +9,7 @@ extern "C" {
 
 TEST_GROUP(tempo_and_duty_testgroup) {
     void setup(void) {
-        init_pots();
+        init_tempo_and_duty_pots();
         adc_setup_platform(nullptr);
     }
 
@@ -21,7 +21,7 @@ TEST_GROUP(tempo_and_duty_testgroup) {
         for (uint16_t i = 0; i < ADC_BLOCK_SIZE; i++) {
             CHECK_EQUAL(expected_average0, get_duty_pot_value());
             CHECK_EQUAL(expected_average0, get_tempo_pot_value());
-            update_values(i * 1000, i * 1000, i);
+            add_tempo_and_duty_value_to_buffer(i * 1000, i * 1000, i);
         }
         CHECK_EQUAL(expected_average1, get_duty_pot_value());
         CHECK_EQUAL(expected_average1, get_tempo_pot_value());
@@ -37,13 +37,13 @@ TEST(tempo_and_duty_testgroup, block_average_correct) {
     uint16_t expected = (ADC_BLOCK_SIZE - 1) * 1000U / 2;
     check_block(0, expected);
     check_block(expected, expected);
-    init_pots();
+    init_tempo_and_duty_pots();
     check_block(0, expected);
 }
 
 TEST(tempo_and_duty_testgroup, no_overflow) {
     for (uint32_t i = 0; i < ADC_BLOCK_SIZE; i++) {
-        update_values(UINT16_MAX, UINT16_MAX, i);
+        add_tempo_and_duty_value_to_buffer(UINT16_MAX, UINT16_MAX, i);
     }
     CHECK_EQUAL(UINT16_MAX, get_duty_pot_value());
     CHECK_EQUAL(UINT16_MAX, get_tempo_pot_value());

@@ -5,7 +5,6 @@
 #include "led.h"
 #include "uart.h"
 #include "tempo_and_duty.h"
-#include "pwm.h"
 #include "step_leds.h"
 #include "utils.h"
 
@@ -14,10 +13,10 @@ static void setup(void) {
 
     led_setup();
     uart_setup();
-    init_pots();
-    pwm_setup();
-    pwm_set_tempo_and_duty(1200, 50);
-    adc_setup(); // TODO: if this goes before pwm_setup, it breaks the LEDS
+    init_tempo_and_duty_pots();
+    setup_tempo_and_duty_adc();
+    setup_sequencer_clock();
+    set_tempo_and_duty(1200, 50);
 
     setup_led_dma();
 }
@@ -61,8 +60,7 @@ int main(void) {
             last_step_millis = millis();
         }
 
-
-        pwm_set_tempo_and_duty(tempo_bpm_tenths, duty_percent);
+        set_tempo_and_duty(tempo_bpm_tenths, duty_percent);
 
         uart_echo();
     }
