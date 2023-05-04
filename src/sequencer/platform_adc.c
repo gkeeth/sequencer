@@ -12,16 +12,6 @@
 
 #include "tempo_and_duty.h" // for updating pot values in ADC ISR
 
-/*
- * set up ADC peripheral to read from duty and tempo potentiometers.
- *
- * Configures a timer to trigger the ADC, and DMA to transfer the readings to
- * buffer.
- *
- * - buffer: receives ADC readings via DMA. The buffer interleaves tempo and
- *           duty readings, and is also double buffered, so it needs to be
- *           four times the block size.
- */
 void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]) {
     DBGMCU_CR |= ADC_DBG_TIM_STOP; // don't trigger ADC timer while debugging
     rcc_periph_clock_enable(RCC_ADC_GPIO);
@@ -83,12 +73,6 @@ void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]) {
     // necessary; strictly speaking a ratio is all we need.
 }
 
-/*
- * run a (blocking) ADC conversion on the enabled channels. Results are stored
- * in buffer, in the order determined by how the channels are configured
- * (either low to high or high to low, depending on order given to
- * adc_set_regular_sequence())
- */
 void adc_convert_platform(uint16_t *buf, uint32_t num_conversions) {
     adc_start_conversion_regular(ADC1);
     for (uint32_t n = 0; n < num_conversions; ++n) {
@@ -122,6 +106,11 @@ void adc_comp_isr(void) {
     }
 }
 
+/*
+ * Each time we complete one block's worth of conversions (i.e. we fill half
+ * the buffer), target the other half of the buffer and calculate a block
+ * average for the half we just finished.
+ */
 void dma1_channel1_isr(void) {
     if (dma_get_interrupt_flag(ADC_DMA, ADC_DMA_CHANNEL, DMA_HTIF)) {
         dma_clear_interrupt_flags(ADC_DMA, ADC_DMA_CHANNEL, DMA_HTIF);

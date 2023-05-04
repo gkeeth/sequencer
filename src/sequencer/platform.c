@@ -20,7 +20,6 @@ void clock_setup_platform(void) {
     systick_interrupt_enable();
 }
 
-
 void led_setup_platform(void) {
     rcc_periph_clock_enable(RCC_STATUS_LED_GPIO);
     gpio_mode_setup(PORT_STATUS_LED, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_STATUS_LED);
@@ -29,21 +28,6 @@ void led_setup_platform(void) {
 void toggle_board_led_platform(void) {
     gpio_toggle(PORT_STATUS_LED, PIN_STATUS_LED);
 }
-
-
-#if 0
-void set_tempo_platform(uint32_t tempo) {
-    ASSERT(UINT32_MAX / 60 > SYSCLK_FREQ_HZ);
-    // update internal tempo variable, if any
-    // update timer period register
-    // also update timer compare register according to new period, so that PWM
-    // duty stays the same overall
-    // TODO: switch to using timer_ns_to_arr()?
-    uint32_t timer_period = SYSCLK_FREQ_HZ * 60 / tempo;
-    // uint32_t pwm_compare = get_duty
-    timer_set_period(SEQCLKOUT_TIMER, timer_period);
-}
-#endif
 
 void failed_platform(const char *file, int line) {
     uart_send_string("ASSERT FAILED at ");

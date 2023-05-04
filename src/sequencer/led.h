@@ -8,7 +8,14 @@
 #define LED_1_HIGH_NS 600
 #define LED_1_LOW_NS (LED_CYCLE_NS - LED_1_HIGH_NS)
 
+/*
+ * set up GPIO for board LED
+ */
 void led_setup(void);
+
+/*
+ * toggle the board LED on or off
+ */
 void toggle_board_led(void);
 
 #endif // LED_H

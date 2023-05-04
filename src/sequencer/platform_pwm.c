@@ -11,26 +11,6 @@
 #include "utils.h"
 #include "step_leds.h"
 
-/*
- * TODO: need the following functions
- * platform-specific (prescaler, arr, ccr, etc are passed directly)
- * 1. tenths_of_bpm_to_period(desired_tenths_of_bpm, result_arr, result_psc)
- * 2. period_ms_to_arr(period_ms, prescaler) // helper - this is not necessary
- * 3. duty_percent_to_ccr(duty_percent, arr) // helper
- * 3. pwm_set_single_timer_platform(timer_peripheral, arr, psc, ccr)
- * 4. pwm_
- *
- * user-facing (ARR, PSC, CCR are calculated, saved internally, and hidden from the user)
- * 1. set_seq_tempo(tenths_of_bpm)
- * 1. set_seq_clock_period_ms(period_ms)
- * 2. set_led_period_ns(period_ns)
- * 3. set_seq_clock_duty(duty_percent)
- * 4. set_led_duty(duty_percent) // might make more sense to have a "set 1" and
- *                               // "set 0" function, and push duty to a lower
- *                               // level
- * 5. led_setup(period_ns)
- * 6. seq_clock_setup(period_ms)
- */
 
 static bool pwm_allowed_timer(uint32_t timer_peripheral);
 static void pwm_setup_timer_platform(uint32_t timer_peripheral);
@@ -181,28 +161,17 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral,
     timer_set_oc_value(timer_peripheral, timer_output_channel, ccr);
 }
 
+/*
+ * returns true if the specified timer is SEQCLKOUT_TIMER or LEDS_TIMER
+ */
 static bool pwm_allowed_timer(uint32_t timer_peripheral) {
     return timer_peripheral == SEQCLKOUT_TIMER || timer_peripheral == LEDS_TIMER;
 }
 
-/*
- * set the PWM period, prescaler, and duty cycle for the step LEDs control timer
- *
- * - period: pwm period (in clock cycles), without any -1 offset.
- * - prescaler: pwm prescaler (in clock cycles), without any -1 offset. for no prescaler, use 1.
- * - pwm_compare: pwm compare value (in clock cycles), without any -1 offset.
- */
 void pwm_set_leds_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare) {
     pwm_set_single_timer_platform(LEDS_TIMER, period, prescaler, pwm_compare);
 }
 
-/*
- * set the PWM period, prescaler, and duty cycle for the generated sequencer clock
- *
- * - period: PWM period (in clock cycles), without any -1 offset.
- * - prescaler: PWM prescaler (in clock cycles), without any -1 offset. For no prescaler, use 1.
- * - pwm_compare: PWM compare value (in clock cycles), without any -1 offset.
- */
 void pwm_set_clock_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare) {
     pwm_set_single_timer_platform(SEQCLKOUT_TIMER, period, prescaler, pwm_compare);
 }

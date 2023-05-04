@@ -18,7 +18,7 @@ static void setup(void) {
     setup_sequencer_clock();
     set_tempo_and_duty(1200, 50);
 
-    setup_led_dma();
+    setup_step_leds_timer();
 }
 
 int main(void) {

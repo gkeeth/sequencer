@@ -12,12 +12,6 @@ void switch_setup(void) {
     }
 }
 
-// set (raw) values for all step switches and the skip/reset switch
-// LSB is step 1
-// a 1 bit means PLAY, a 0 bit means SKIP
-//
-// This function needs to be called periodically (i.e. based on a timer).
-// Values are debounced after NUM_DEBOUNCE_CYCLES timer events.
 void set_switches(uint32_t raw_step_values, uint32_t raw_skip_reset_value) {
     static uint32_t debounce_index = 0;
     switch_values[debounce_index] = raw_step_values | (raw_skip_reset_value << NUM_STEPS);
@@ -33,7 +27,6 @@ static uint32_t get_debounced_switch_values(void) {
     return debounced;
 }
 
-// returns debounced switch status for step
 step_switch get_step_switch(uint32_t step) {
     ASSERT((step >= 1) && (step <= NUM_STEPS));
 
@@ -41,7 +34,6 @@ step_switch get_step_switch(uint32_t step) {
     return !!(debounced & (0x1 << (step - 1)));
 }
 
-// returns debounced skip/reset switch status
 skip_reset_switch get_skip_reset_switch(void) {
     uint32_t debounced = get_debounced_switch_values();
     return !!(debounced & (0x1 << NUM_STEPS));

@@ -23,7 +23,6 @@ void uart_send_char_platform(char c) {
     usart_send_blocking(USART, (uint16_t) c);
 }
 
-// Check if there is a received char available to be read
 bool uart_check_received_char_platform(void) {
     return usart_get_flag(USART, USART_ISR_RXNE);
 }

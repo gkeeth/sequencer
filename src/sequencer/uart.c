@@ -9,14 +9,12 @@ void uart_send_char(char c) {
     uart_send_char_platform(c);
 }
 
-// send a zero-terminated string via uart
 void uart_send_string(const char *s) {
     while (*s) {
         uart_send_char(*s++);
     }
 }
 
-// send a zero-terminated string, with "\r\n" appended, via uart
 void uart_send_line(const char *s) {
     uart_send_string(s);
     uart_send_string("\r\n");
@@ -53,10 +51,6 @@ void uart_send_number(int32_t number) {
     uart_send_char('\n');
 }
 
-
-// check if any characters have been received and if so echo them out.
-//
-// needs to be run repeatedly (in a loop)
 void uart_echo(void) {
     if (uart_check_received_char_platform()) {
         // there's a byte to be received

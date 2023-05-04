@@ -6,22 +6,6 @@
 #include "utils.h"
 #include "step_leds.h"
 
-/*
- * implementation notes
- *
- * - first 24 bits are accepted by 1st LED, subsequent bits are forwarded to
- *   next leds
- * - LED won't change until a reset is received (send a reset after sending all
- *   data)
- * - reset also means that the next 24 bits will be accepted by the first LED
- *
- * - 0 bit: high for T0H (300ns), then low for T0L (900ns) -> 1200ns period, 25% duty cycle
- * - 1 bit: high for T1H (600ns), then low for T1L (600ns) -> 1200ns period, 50% duty cycle
- * - reset: low for Treset (80us) -> 80000ns period, 0% duty cycle
- *
- * - 24 bit sequence is GRB, with MSB sent first
- *
- */
 
 /*
  * green, red, blue
@@ -31,19 +15,10 @@
  */
 uint32_t led_buffer[LED_BUFFER_SIZE] = {0};
 
-void setup_led_dma(void) {
+void setup_step_leds_timer(void) {
     pwm_setup_leds_timer_platform(led_buffer);
 }
 
-/*
- * convert brightness values (0-100) for each color to PWM duty values.
- *
- * - buffer: output array that will be a DMA source for the LED PWM DMA. Must
- *           be big enough for NUM_STEPS * 3 colors * 8 bits per color.
- * - red: red brightness, 0-255
- * - green: green brightness, 0-255
- * - blue: blue brightness, 0-255
- */
 void led_set_up_buffer(uint32_t buffer[static LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue) {
     for (uint32_t step = 0; step < NUM_STEPS; ++step) {
