@@ -99,7 +99,9 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         timer_set_period(timer_peripheral, LED_DATA_ARR);
         timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
 
-        led_set_up_buffer(led_pwm_buffer, 0xFF, 0x0, 0x0);
+        for (uint32_t step = 0; step < NUM_STEPS; ++step) {
+            led_set_up_buffer(led_pwm_buffer, 0x20, 0x0, 0x0, step);
+        }
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
         uint32_t clk_period;
@@ -199,13 +201,18 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
 
         uint8_t red, green, blue = 0;
         static uint32_t next_color = 0;
-        switch (next_color) {
-            default:
-            case 0: red = 0xFF; green = 0x0; blue = 0x0; break;
-            case 1: red = 0x0; green = 0xFF; blue = 0x0; break;
-            case 2: red = 0x0; green = 0x0; blue = 0xFF; break;
+        for (uint32_t step_led = 0; step_led < NUM_STEPS; ++step_led) {
+            switch (next_color) {
+                default:
+                case 0: red = 0x20; green = 0x0; blue = 0x0; break;  // red
+                case 1: red = 0x0; green = 0x20; blue = 0x0; break;  // green
+                case 2: red = 0x0; green = 0x0; blue = 0x20; break;  // blue
+                case 3: red = 0x10; green = 0x0; blue = 0x10; break; // purple
+                case 4: red = 0x10; green = 0x10; blue = 0x0; break; // yellow
+            }
+
+            next_color = (next_color + 1) % 5;
+            led_set_up_buffer(led_pwm_buffer, red, green, blue, step_led);
         }
-        next_color = (next_color + 1) % 3;
-        led_set_up_buffer(led_pwm_buffer, red, green, blue);
     }
 }
