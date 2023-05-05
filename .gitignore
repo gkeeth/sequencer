@@ -17,3 +17,4 @@ doc/
 *.o
 *.d
 sequencer_tests
+openocd.log
