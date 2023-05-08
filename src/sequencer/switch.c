@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "utils.h"
 #include "switch.h"
+#include "platform_constants.h"
 
 #define STEP_SWITCH_ALL_PLAY 0x01FF
 

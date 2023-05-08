@@ -100,7 +100,7 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
 
         for (uint32_t step = 0; step < NUM_STEPS; ++step) {
-            led_set_up_buffer(led_pwm_buffer, 0x20, 0x0, 0x0, step);
+            led_set_step_to_color(led_pwm_buffer, 0x20, 0x0, 0x0, step);
         }
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
@@ -212,7 +212,7 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
             }
 
             next_color = (next_color + 1) % 5;
-            led_set_up_buffer(led_pwm_buffer, red, green, blue, step_led);
+            led_set_step_to_color(led_pwm_buffer, red, green, blue, step_led);
         }
     }
 }

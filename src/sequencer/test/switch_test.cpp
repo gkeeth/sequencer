@@ -2,6 +2,7 @@
 #include <cstdint>
 
 extern "C" {
+#include "platform_constants.h"
 #include "switch.h"
 }
 

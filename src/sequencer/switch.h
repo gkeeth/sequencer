@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#define NUM_STEPS 8
 #define NUM_DEBOUNCE_CYCLES 20
 
 // SKIP is 3.3V, RESET is 0V
@@ -31,12 +30,12 @@ void switch_setup(void);
 void set_switches(uint32_t raw_step_values, uint32_t raw_skip_reset_value);
 
 /*
- * returns debounced switch status for step
+ * returns debounced state of the step switch for the specified step
  */
 step_switch get_step_switch(uint32_t step);
 
 /*
-* returns debounced skip/reset switch status
+* returns debounced state of skip/reset switch
 */
 skip_reset_switch get_skip_reset_switch(void);
 
