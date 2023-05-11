@@ -19,7 +19,7 @@ void setup_step_leds_timer(void) {
     pwm_setup_leds_timer_platform(led_buffer);
 }
 
-void led_set_up_buffer(uint32_t buffer[LED_BUFFER_SIZE],
+void led_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue, uint32_t step_led) {
 
     ASSERT(step_led < NUM_STEPS);
@@ -40,6 +40,16 @@ void led_set_up_buffer(uint32_t buffer[LED_BUFFER_SIZE],
         }
     }
     // the last item in the buffer is always left as 0, as the reset.
+}
+
+void led_set_for_step(uint32_t buffer[LED_BUFFER_SIZE], uint32_t step) {
+    for (uint32_t i = 0; i < NUM_STEPS; ++i) {
+        if (i == step) {
+            led_set_step_to_color(buffer, LED_STEP_ACTIVE_RED, LED_STEP_ACTIVE_GREEN, LED_STEP_ACTIVE_BLUE, i);
+        } else {
+            led_set_step_to_color(buffer, LED_STEP_INACTIVE_RED, LED_STEP_INACTIVE_GREEN, LED_STEP_INACTIVE_BLUE, i);
+        }
+    }
 }
 
 void leds_enable_dma(void) {

@@ -30,7 +30,9 @@ void leds_enable_dma(void);
  * - blue: blue brightness, 0-255
  * - step: sequencer step to fill in, zero-indexed (0-(NUM_STEPS-1))
  */
-void led_set_up_buffer(uint32_t buffer[LED_BUFFER_SIZE],
+void led_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue, uint32_t step);
+
+void led_set_for_step(uint32_t buffer[LED_BUFFER_SIZE], uint32_t step);
 
 #endif // STEP_LEDS_H
