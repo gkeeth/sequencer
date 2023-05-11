@@ -19,8 +19,10 @@ void setup_step_leds_timer(void) {
     pwm_setup_leds_timer_platform(led_buffer);
 }
 
-void led_set_up_buffer(uint32_t buffer[static LED_BUFFER_SIZE],
+void led_set_up_buffer(uint32_t buffer[LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue, uint32_t step_led) {
+
+    ASSERT(step_led < NUM_STEPS);
 
     for (uint32_t color = 0; color < 3; ++color) { // green, red, blue
         uint8_t strength;

@@ -2,11 +2,12 @@ PROJECT = sequencer
 BUILD_DIR = bin
 
 # add project c files that don't need to be tested here
-NO_TEST_CFILES = sequencer.c system_clocks.c step_leds.c
+NO_TEST_CFILES = sequencer.c system_clocks.c
 NO_TEST_CFILES += platform.c platform_uart.c platform_adc.c platform_pwm.c
 
 # Add project c files that do need to be tested here
 TEST_CFILES = utils.c tempo_and_duty.c uart.c switch.c led.c platform_utils.c
+TEST_CFILES += step_leds.c
 
 CFILES = $(NO_TEST_CFILES) $(TEST_CFILES)
 
