@@ -5,7 +5,7 @@
 #include "led.h"
 #include "uart.h"
 #include "tempo_and_duty.h"
-#include "step_leds.h"
+#include "steps.h"
 #include "utils.h"
 
 static void setup(void) {

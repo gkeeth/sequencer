@@ -4,7 +4,7 @@
 #include <cstring>
 
 extern "C" {
-#include "step_leds.h"
+#include "steps.h"
 #include "platform_constants.h"
 }
 

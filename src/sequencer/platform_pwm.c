@@ -9,7 +9,7 @@
 #include "platform_utils.h"
 #include "platform_constants.h"
 #include "utils.h"
-#include "step_leds.h"
+#include "steps.h"
 
 
 static bool pwm_allowed_timer(uint32_t timer_peripheral);
