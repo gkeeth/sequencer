@@ -141,3 +141,9 @@ TEST(steps_testgroup, next_step_wraps_around) {
     CHECK_EQUAL(1, get_next_step(0, 0xFF, SWITCH_SKIP));
     CHECK_EQUAL(0, get_next_step(NUM_STEPS - 1, 0xFF, SWITCH_SKIP));
 }
+
+TEST(steps_testgroup, is_step_skipped_test) {
+    CHECK_EQUAL(true, is_step_skipped(0, 0b11111110));
+    CHECK_EQUAL(false, is_step_skipped(1, 0b11111110));
+    CHECK_EQUAL(false, is_step_skipped(7, 0b11111110));
+}

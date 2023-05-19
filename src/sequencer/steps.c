@@ -62,16 +62,15 @@ void leds_enable_dma(void) {
 uint32_t get_next_step(uint32_t current_step, uint32_t step_switch_values, skip_reset_switch skip_reset_value) {
     uint32_t next_step = 0; // default to first step if none of the subsequent steps are available
 
-    bool current_active = ((step_switch_values >> current_step) & 0x1) == SWITCH_STEP_PLAY;
+    bool current_skip = is_step_skipped(current_step, step_switch_values);
     bool reset = (skip_reset_value == SWITCH_RESET);
 
     for (uint32_t n = 1; n <= NUM_STEPS; ++n) {
         uint32_t candidate = (current_step + n) % NUM_STEPS;
-        // TODO: factor this out into a switch.c util
-        bool candidate_active = ((step_switch_values >> candidate) & 0x1) == SWITCH_STEP_PLAY;
-        if (reset && !(current_active && candidate_active)) {
+        bool candidate_skip = is_step_skipped(candidate, step_switch_values);
+        if (reset && (current_skip || candidate_skip)) {
             break; // default next_step is 0
-        } else if (candidate_active) {
+        } else if (!candidate_skip) {
             next_step = candidate;
             break;
         }

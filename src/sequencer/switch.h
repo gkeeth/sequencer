@@ -2,6 +2,7 @@
 #define SWITCH_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define NUM_DEBOUNCE_CYCLES 20
 
@@ -34,6 +35,15 @@ void set_switches(uint32_t raw_step_values, uint32_t raw_skip_reset_value);
  * returns debounced state of the step switch for the specified step (0-indexed)
  */
 step_switch get_step_switch(uint32_t step);
+
+/*
+ * returns true if step is set to skip, otherwise false
+ *
+ * - step: step to check, 0 to NUM_STEPS
+ * - step_switch_values: bitfield of step switch values, LSB is step 0. A 1 bit
+ *                       means PLAY, a 0 bit means SKIP
+ */
+bool is_step_skipped(uint32_t step, uint32_t step_switch_values);
 
 /*
  * returns debounced state of all step switches (LSB is first step).

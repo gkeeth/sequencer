@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "utils.h"
 #include "switch.h"
 #include "platform_constants.h"
@@ -37,6 +36,10 @@ step_switch get_step_switch(uint32_t step) {
 
 uint32_t get_step_switches(void) {
     return get_debounced_switch_values() & ~(0x1U << NUM_STEPS);
+}
+
+bool is_step_skipped(uint32_t step, uint32_t step_switch_values) {
+    return ((step_switch_values >> step) & 0x1) == SWITCH_STEP_SKIP_RESET;
 }
 
 skip_reset_switch get_skip_reset_switch(void) {
