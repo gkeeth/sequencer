@@ -33,12 +33,13 @@ TEST_GROUP(steps_testgroup) {
             uint32_t expected_inactive[STEP_SIZE],
             uint32_t expected_disabled[STEP_SIZE]) {
 
-        led_set_for_step(test_buffer, step, enabled_steps);
+        leds_set_for_step(test_buffer, step, enabled_steps);
 
         for (uint32_t i = 0; i < LED_BUFFER_SIZE - 1; ++i) {
-            if ((i / STEP_SIZE) == step) {
+            uint32_t led = i / STEP_SIZE;
+            if (led == step) {
                 CHECK_EQUAL(expected_active[i % STEP_SIZE], test_buffer[i]);
-            } else if ((enabled_steps & (0x1 << step)) == SWITCH_STEP_SKIP_RESET) {
+            } else if (is_step_skipped(led, enabled_steps)) {
                 CHECK_EQUAL(expected_disabled[i % STEP_SIZE], test_buffer[i]);
             } else {
                 CHECK_EQUAL(expected_inactive[i % STEP_SIZE], test_buffer[i]);
@@ -51,13 +52,13 @@ TEST_GROUP(steps_testgroup) {
 
 TEST(steps_testgroup, last_item_in_buffer_always_zero) {
     for (uint32_t step = 0; step < NUM_STEPS; ++step) {
-        led_set_step_to_color(test_buffer, 255, 255, 255, step);
+        leds_set_step_to_color(test_buffer, 255, 255, 255, step);
     }
     CHECK_EQUAL(0, test_buffer[LED_BUFFER_SIZE - 1]);
 }
 
 TEST(steps_testgroup, first_led_set_correctly) {
-    led_set_step_to_color(test_buffer, 255, 255, 255, 0);
+    leds_set_step_to_color(test_buffer, 255, 255, 255, 0);
     const uint32_t j = 3U * 8U;
     for (uint32_t i = 0; i < j; ++i) {
         CHECK_EQUAL(LED_DATA1_CCR, test_buffer[i]);
@@ -68,7 +69,7 @@ TEST(steps_testgroup, first_led_set_correctly) {
 }
 
 TEST(steps_testgroup, last_led_set_correctly) {
-    led_set_step_to_color(test_buffer, 255, 255, 255, 7);
+    leds_set_step_to_color(test_buffer, 255, 255, 255, 7);
     const uint32_t j = 7U * 3U * 8U;
     for (uint32_t i = 0; i < j; ++i) {
         CHECK_EQUAL(0, test_buffer[i]);
@@ -81,7 +82,7 @@ TEST(steps_testgroup, last_led_set_correctly) {
 
 TEST(steps_testgroup, step_out_of_bounds_assert) {
     assert_fake_setup(true);
-    led_set_step_to_color(test_buffer, 255, 255, 255, NUM_STEPS);
+    leds_set_step_to_color(test_buffer, 255, 255, 255, NUM_STEPS);
     FAIL("did not hit expected assert in led_set_up_buffer");
 }
 
@@ -112,6 +113,9 @@ TEST(steps_testgroup, steps_lit_correctly) {
 
     // first step active, second step disabled
     check_buffer_at_step(0, 0xFFFFFFFD, expected_active, expected_inactive, expected_disabled);
+
+    // first step disabled
+    check_buffer_at_step(0, 0b01110010, expected_active, expected_inactive, expected_disabled);
 }
 
 

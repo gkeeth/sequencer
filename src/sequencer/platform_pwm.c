@@ -100,7 +100,7 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
 
         for (uint32_t step = 0; step < NUM_STEPS; ++step) {
-            led_set_step_to_color(led_pwm_buffer, 0x20, 0x0, 0x0, step);
+            leds_set_step_to_color(led_pwm_buffer, 0x20, 0x0, 0x0, step);
         }
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
@@ -203,12 +203,10 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
         uint32_t step_switch_values = get_step_switches();
         skip_reset_switch reset_switch_value = SWITCH_RESET;
         step_switch_values = 0b01110010; // 0 = skip/reset, 1 = play
-        // TODO
-        // issues to debug
-        // - when first step is disabled and skip/reset is set to RESET, steps 1-7 don't light up at all
+        // TODO issues to debug
         // - switches don't seem to work at all
         step = get_next_step(step, step_switch_values, reset_switch_value);
-        led_set_for_step(led_pwm_buffer, step, step_switch_values);
+        leds_set_for_step(led_pwm_buffer, step, step_switch_values);
 
 #if 0
         // christmas tree lights

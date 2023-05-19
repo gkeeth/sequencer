@@ -19,7 +19,7 @@ void setup_step_leds_timer(void) {
     pwm_setup_leds_timer_platform(led_buffer);
 }
 
-void led_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
+void leds_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue, uint32_t step_led) {
 
     ASSERT(step_led < NUM_STEPS);
@@ -42,15 +42,15 @@ void led_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
     // the last item in the buffer is always left as 0, as the reset.
 }
 
-void led_set_for_step(uint32_t buffer[LED_BUFFER_SIZE], uint32_t step, uint32_t step_switch_values) {
+void leds_set_for_step(uint32_t buffer[LED_BUFFER_SIZE], uint32_t step, uint32_t step_switch_values) {
     for (uint32_t led = 0; led < NUM_STEPS; ++led) {
         if (led == step) {
             // set to active step color even if the step is disabled
-            led_set_step_to_color(buffer, LED_STEP_ACTIVE_RED, LED_STEP_ACTIVE_GREEN, LED_STEP_ACTIVE_BLUE, led);
-        } else if ((step_switch_values & (0x1 << step)) == SWITCH_STEP_SKIP_RESET) {
-            led_set_step_to_color(buffer, LED_STEP_DISABLED_RED, LED_STEP_DISABLED_GREEN, LED_STEP_DISABLED_BLUE, led);
+            leds_set_step_to_color(buffer, LED_STEP_ACTIVE_RED, LED_STEP_ACTIVE_GREEN, LED_STEP_ACTIVE_BLUE, led);
+        } else if (is_step_skipped(led, step_switch_values)) {
+            leds_set_step_to_color(buffer, LED_STEP_DISABLED_RED, LED_STEP_DISABLED_GREEN, LED_STEP_DISABLED_BLUE, led);
         } else {
-            led_set_step_to_color(buffer, LED_STEP_INACTIVE_RED, LED_STEP_INACTIVE_GREEN, LED_STEP_INACTIVE_BLUE, led);
+            leds_set_step_to_color(buffer, LED_STEP_INACTIVE_RED, LED_STEP_INACTIVE_GREEN, LED_STEP_INACTIVE_BLUE, led);
         }
     }
 }
