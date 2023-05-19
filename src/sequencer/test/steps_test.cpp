@@ -5,11 +5,12 @@
 
 extern "C" {
 #include "steps.h"
+#include "switch.h"
 #include "platform_constants.h"
 }
 
 #define STEP_SIZE (3U * 8U)
-TEST_GROUP(step_leds_testgroup) {
+TEST_GROUP(steps_testgroup) {
     uint32_t test_buffer[LED_BUFFER_SIZE];
 
     void setup(void) {
@@ -17,16 +18,28 @@ TEST_GROUP(step_leds_testgroup) {
         memset(test_buffer, 0, sizeof test_buffer);
     }
 
-    void check_buffer_at_step(uint32_t step,
+    /* checks that a full LED buffer is correct for a given active step.
+     *
+     * - step: the active step (should be lit up differently)
+     * - enabled_steps: bitfield representing enabled steps. LSB is first step,
+     *                  high bits mean enabled.
+     * - expected_active: array of what an active step should look like
+     * - expected_inactive: array of what inactive (but enabled) steps should
+     *                      look like
+     * - expected_disabled: array of what disabled steps should look like
+     */
+    void check_buffer_at_step(uint32_t step, uint32_t enabled_steps,
             uint32_t expected_active[STEP_SIZE],
             uint32_t expected_inactive[STEP_SIZE],
             uint32_t expected_disabled[STEP_SIZE]) {
 
-        led_set_for_step(test_buffer, step);
+        led_set_for_step(test_buffer, step, enabled_steps);
 
         for (uint32_t i = 0; i < LED_BUFFER_SIZE - 1; ++i) {
             if ((i / STEP_SIZE) == step) {
                 CHECK_EQUAL(expected_active[i % STEP_SIZE], test_buffer[i]);
+            } else if ((enabled_steps & (0x1 << step)) == SWITCH_STEP_SKIP_RESET) {
+                CHECK_EQUAL(expected_disabled[i % STEP_SIZE], test_buffer[i]);
             } else {
                 CHECK_EQUAL(expected_inactive[i % STEP_SIZE], test_buffer[i]);
             }
@@ -36,14 +49,14 @@ TEST_GROUP(step_leds_testgroup) {
     }
 };
 
-TEST(step_leds_testgroup, last_item_in_buffer_always_zero) {
+TEST(steps_testgroup, last_item_in_buffer_always_zero) {
     for (uint32_t step = 0; step < NUM_STEPS; ++step) {
         led_set_step_to_color(test_buffer, 255, 255, 255, step);
     }
     CHECK_EQUAL(0, test_buffer[LED_BUFFER_SIZE - 1]);
 }
 
-TEST(step_leds_testgroup, first_led_set_correctly) {
+TEST(steps_testgroup, first_led_set_correctly) {
     led_set_step_to_color(test_buffer, 255, 255, 255, 0);
     const uint32_t j = 3U * 8U;
     for (uint32_t i = 0; i < j; ++i) {
@@ -54,7 +67,7 @@ TEST(step_leds_testgroup, first_led_set_correctly) {
     }
 }
 
-TEST(step_leds_testgroup, last_led_set_correctly) {
+TEST(steps_testgroup, last_led_set_correctly) {
     led_set_step_to_color(test_buffer, 255, 255, 255, 7);
     const uint32_t j = 7U * 3U * 8U;
     for (uint32_t i = 0; i < j; ++i) {
@@ -66,30 +79,65 @@ TEST(step_leds_testgroup, last_led_set_correctly) {
     CHECK_EQUAL(0, test_buffer[LED_BUFFER_SIZE - 1]);
 }
 
-TEST(step_leds_testgroup, step_out_of_bounds_assert) {
+TEST(steps_testgroup, step_out_of_bounds_assert) {
     assert_fake_setup(true);
     led_set_step_to_color(test_buffer, 255, 255, 255, NUM_STEPS);
     FAIL("did not hit expected assert in led_set_up_buffer");
 }
 
-/* test list TODO
- * - disabled steps are lit up correctly (what color? none?)
- */
-
-TEST(step_leds_testgroup, enabled_steps_lit_correctly) {
-    // this tests a single step (active and inactive LEDs, no disabled LEDs)
-    // expand with disabled LEDs, another step, wraparound
+TEST(steps_testgroup, steps_lit_correctly) {
     uint32_t expected_active[] = {
         LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, // green
-        LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, // red
+        LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA1_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, // red
         LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR  // blue
     };
     uint32_t expected_inactive[] = {
         LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, // green
         LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, // red
-        LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR, LED_DATA1_CCR  // blue
+        LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA1_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR  // blue
+    };
+    uint32_t expected_disabled[] = {
+        LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, // green
+        LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, // red
+        LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR, LED_DATA0_CCR  // blue
     };
 
-    check_buffer_at_step(NUM_STEPS - 1, expected_active, expected_inactive, NULL);
-    check_buffer_at_step(0, expected_active, expected_inactive, NULL);
+    // last step active, no disabled steps
+    check_buffer_at_step(NUM_STEPS - 1, 0xFFFFFFFF, expected_active, expected_inactive, expected_disabled);
+    // first step active, no disabled steps
+    check_buffer_at_step(0, 0xFFFFFFFF, expected_active, expected_inactive, expected_disabled);
+
+    // first step active, first step disabled
+    check_buffer_at_step(0, 0xFFFFFFFE, expected_active, expected_inactive, expected_disabled);
+
+    // first step active, second step disabled
+    check_buffer_at_step(0, 0xFFFFFFFD, expected_active, expected_inactive, expected_disabled);
+}
+
+
+TEST(steps_testgroup, skip_switch_skips_step) {
+    // skip first step
+    CHECK_EQUAL(1, get_next_step(NUM_STEPS - 1, 0b11111110, SWITCH_SKIP));
+
+    // skip second step
+    CHECK_EQUAL(2, get_next_step(0, 0b11111101, SWITCH_SKIP));
+
+    // skip last step
+    CHECK_EQUAL(0, get_next_step(NUM_STEPS - 2, 0b01111111, SWITCH_SKIP));
+}
+
+TEST(steps_testgroup, reset_switch_skips_steps_after_skip_switch) {
+    // basic case - go back to the beginning after hitting a reset
+    CHECK_EQUAL(0, get_next_step(1, 0b11111011, SWITCH_RESET));
+
+    // if there are no valid steps, we just use step 0
+    CHECK_EQUAL(0, get_next_step(NUM_STEPS - 1, 0b11111110, SWITCH_RESET));
+
+    // never progress past step 0 if step 0 resets
+    CHECK_EQUAL(0, get_next_step(0, 0b11111110, SWITCH_RESET));
+}
+
+TEST(steps_testgroup, next_step_wraps_around) {
+    CHECK_EQUAL(1, get_next_step(0, 0xFF, SWITCH_SKIP));
+    CHECK_EQUAL(0, get_next_step(NUM_STEPS - 1, 0xFF, SWITCH_SKIP));
 }

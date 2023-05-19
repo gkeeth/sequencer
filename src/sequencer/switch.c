@@ -29,14 +29,18 @@ static uint32_t get_debounced_switch_values(void) {
 }
 
 step_switch get_step_switch(uint32_t step) {
-    ASSERT((step >= 1) && (step <= NUM_STEPS));
+    ASSERT(step < NUM_STEPS);
 
     uint32_t debounced = get_debounced_switch_values();
-    return !!(debounced & (0x1 << (step - 1)));
+    return !!(debounced & (0x1U << step));
+}
+
+uint32_t get_step_switches(void) {
+    return get_debounced_switch_values() & ~(0x1U << NUM_STEPS);
 }
 
 skip_reset_switch get_skip_reset_switch(void) {
     uint32_t debounced = get_debounced_switch_values();
-    return !!(debounced & (0x1 << NUM_STEPS));
+    return !!(debounced & (0x1U << NUM_STEPS));
 }
 

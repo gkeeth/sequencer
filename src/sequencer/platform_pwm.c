@@ -199,6 +199,19 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
         dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_pwm_buffer);
         dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
 
+        static uint32_t step = NUM_STEPS - 1;
+        uint32_t step_switch_values = get_step_switches();
+        skip_reset_switch reset_switch_value = SWITCH_RESET;
+        step_switch_values = 0b01110010; // 0 = skip/reset, 1 = play
+        // TODO
+        // issues to debug
+        // - when first step is disabled and skip/reset is set to RESET, steps 1-7 don't light up at all
+        // - switches don't seem to work at all
+        step = get_next_step(step, step_switch_values, reset_switch_value);
+        led_set_for_step(led_pwm_buffer, step, step_switch_values);
+
+#if 0
+        // christmas tree lights
         uint8_t red, green, blue = 0;
         static uint32_t next_color = 0;
         for (uint32_t step_led = 0; step_led < NUM_STEPS; ++step_led) {
@@ -214,5 +227,6 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
             next_color = (next_color + 1) % 5;
             led_set_step_to_color(led_pwm_buffer, red, green, blue, step_led);
         }
+#endif
     }
 }
