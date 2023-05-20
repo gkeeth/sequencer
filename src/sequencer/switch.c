@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "switch.h"
+#include "platform.h"
 #include "platform_constants.h"
 
 #define STEP_SWITCH_ALL_PLAY 0x01FF
@@ -10,6 +11,7 @@ void switch_setup(void) {
     for (uint32_t n = 0; n < NUM_DEBOUNCE_CYCLES; ++n) {
         switch_values[n] = STEP_SWITCH_ALL_PLAY;
     }
+    switch_setup_platform();
 }
 
 void set_switches(uint32_t raw_step_values, uint32_t raw_skip_reset_value) {

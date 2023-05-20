@@ -201,10 +201,9 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
 
         static uint32_t step = NUM_STEPS - 1;
         uint32_t step_switch_values = get_step_switches();
-        skip_reset_switch reset_switch_value = SWITCH_RESET;
-        step_switch_values = 0b01110010; // 0 = skip/reset, 1 = play
-        // TODO issues to debug
-        // - switches don't seem to work at all
+        skip_reset_switch reset_switch_value = get_skip_reset_switch();
+        // reset_switch_value = SWITCH_RESET;
+        // step_switch_values = 0b01110010; // 0 = skip/reset, 1 = play
         step = get_next_step(step, step_switch_values, reset_switch_value);
         leds_set_for_step(led_pwm_buffer, step, step_switch_values);
 

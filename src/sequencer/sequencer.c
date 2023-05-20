@@ -14,6 +14,7 @@ static void setup(void) {
     led_setup();
     uart_setup();
     init_tempo_and_duty_pots();
+    switch_setup();
     setup_tempo_and_duty_adc();
     setup_sequencer_clock();
     set_tempo_and_duty(1200, 50);
@@ -50,6 +51,17 @@ int main(void) {
             uart_send_number((int32_t) tempo_bpm);
             uart_send_string("duty (raw): ");
             uart_send_number((int32_t) get_duty_pot_value());
+
+            uart_send_string("debounced skip/reset switch: ");
+            if (get_skip_reset_switch() == SWITCH_SKIP) {
+                uart_send_string("SKIP\r\n");
+            } else {
+                uart_send_string("RESET\r\n");
+            }
+
+            uart_send_string("debounced step switch values: ");
+            uart_send_number((int32_t) get_step_switches());
+
             uart_send_line("");
 
             last_adc_print_millis = millis();

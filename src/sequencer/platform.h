@@ -60,6 +60,12 @@ void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]);
 void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions);
 
 /*
+ * set up GPIOs for switches and initialize timer/interrupts for reading
+ * switches automatically
+ */
+void switch_setup_platform(void);
+
+/*
  * (re-) enable DMA for the step LEDs. This can be used to trigger a step LED
  * update, although the update will not actually happen until the next timer
  * compare event.
