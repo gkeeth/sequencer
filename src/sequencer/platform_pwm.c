@@ -17,10 +17,15 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral);
 static void pwm_set_single_timer_platform(uint32_t timer_peripheral,
         uint32_t period, uint32_t prescaler, uint32_t pwm_compare);
 
-static uint32_t *led_pwm_buffer;
+/*
+ * green, red, blue
+ * each color has 8 bits, MSB first
+ * 3 colors are repeated 8x, once for each step
+ * the last item is always 0, which is a reset.
+ */
+static uint32_t led_pwm_buffer[LED_BUFFER_SIZE] = {0};
 
-void pwm_setup_leds_timer_platform(uint32_t led_buffer[LED_BUFFER_SIZE]) {
-    led_pwm_buffer = led_buffer;
+void pwm_setup_leds_timer_platform(void) {
     pwm_setup_timer_platform(LEDS_TIMER);
 }
 
@@ -79,7 +84,6 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
     }
 
     if (timer_peripheral == LEDS_TIMER) {
-        ASSERT(led_pwm_buffer);
         rcc_periph_clock_enable(RCC_LEDS_DMA);
         dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
         dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_pwm_buffer);
@@ -99,7 +103,7 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         timer_set_period(timer_peripheral, LED_DATA_ARR);
         timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
 
-        set_leds_for_next_step(NUM_STEPS - 1);
+        set_leds_for_next_step(NUM_STEPS - 1, led_pwm_buffer);
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
         uint32_t clk_period;
@@ -198,6 +202,6 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
         dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
 
         static uint32_t current_step = NUM_STEPS - 1;
-        current_step = set_leds_for_next_step(current_step);
+        current_step = set_leds_for_next_step(current_step, led_pwm_buffer);
     }
 }

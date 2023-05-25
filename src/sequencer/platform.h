@@ -84,12 +84,8 @@ void toggle_board_led_platform(void);
 
 /*
  * set up the timer and DMA for the step LEDs.
- *
- * led_buffer is a buffer of size LED_BUFFER_SIZE that will contain
- * the PWM duty cycle values for controlling the step LEDs' color and
- * brightness.
  */
-void pwm_setup_leds_timer_platform(uint32_t led_buffer[LED_BUFFER_SIZE]);
+void pwm_setup_leds_timer_platform(void);
 
 /*
  * set up the timer for the sequencer clock
