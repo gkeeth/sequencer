@@ -17,9 +17,9 @@ static void setup(void) {
     switch_setup();
     setup_tempo_and_duty_adc();
     setup_sequencer_clock();
-    set_tempo_and_duty(1200, 50);
+    set_tempo_and_duty(1200, 50); // TODO: don't hardcode; use pots
 
-    setup_step_leds_timer();
+    setup_step_leds_timer(); // TODO: this won't get live values of switches until switches have been set up for 16ms
 }
 
 int main(void) {
