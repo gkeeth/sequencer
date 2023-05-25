@@ -65,4 +65,15 @@ void leds_set_for_step(uint32_t buffer[LED_BUFFER_SIZE], uint32_t step, uint32_t
  */
 uint32_t get_next_step(uint32_t current_step, uint32_t step_switch_values, skip_reset_switch skip_reset_value);
 
+/*
+ * fill LED buffer with the appropriate PWM duty cycles for the step after the
+ * given step. Reads the step switches and the skip/reset switch, determining
+ * the next step and setting the LEDs on/off as appropriate.
+ *
+ * Returns the calculated next step.
+ *
+ * - current_step: the current step (0-indexed)
+ */
+uint32_t set_leds_for_next_step(uint32_t current_step);
+
 #endif // STEP_LEDS_H

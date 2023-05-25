@@ -79,3 +79,11 @@ uint32_t get_next_step(uint32_t current_step, uint32_t step_switch_values, skip_
     return next_step;
 }
 
+uint32_t set_leds_for_next_step(uint32_t current_step) {
+        uint32_t step_switch_values = get_step_switches();
+        skip_reset_switch reset_switch_value = get_skip_reset_switch();
+        uint32_t next_step = get_next_step(current_step, step_switch_values, reset_switch_value);
+        leds_set_for_step(led_buffer, next_step, step_switch_values);
+
+        return next_step;
+}

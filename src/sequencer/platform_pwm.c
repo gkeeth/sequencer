@@ -99,12 +99,7 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         timer_set_period(timer_peripheral, LED_DATA_ARR);
         timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
 
-        // TODO: put into helper set_leds_based_on_switches(current_step)
-        uint32_t step = NUM_STEPS - 1;
-        uint32_t step_switch_values = get_step_switches();
-        skip_reset_switch reset_switch_value = get_skip_reset_switch();
-        step = get_next_step(step, step_switch_values, reset_switch_value);
-        leds_set_for_step(led_pwm_buffer, step, step_switch_values);
+        set_leds_for_next_step(NUM_STEPS - 1);
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
         uint32_t clk_period;
@@ -202,10 +197,7 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
         dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_pwm_buffer);
         dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
 
-        static uint32_t step = NUM_STEPS - 1;
-        uint32_t step_switch_values = get_step_switches();
-        skip_reset_switch reset_switch_value = get_skip_reset_switch();
-        step = get_next_step(step, step_switch_values, reset_switch_value);
-        leds_set_for_step(led_pwm_buffer, step, step_switch_values);
+        static uint32_t current_step = NUM_STEPS - 1;
+        current_step = set_leds_for_next_step(current_step);
     }
 }
