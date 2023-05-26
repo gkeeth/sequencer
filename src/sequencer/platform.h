@@ -111,6 +111,16 @@ void pwm_set_leds_period_and_duty_platform(uint32_t period, uint32_t prescaler, 
 void pwm_set_clock_period_and_duty_platform(uint32_t period, uint32_t prescaler, uint32_t pwm_compare);
 
 /*
+ * set up GPIOs for controlling analog CV mux
+ */
+void mux_setup_platform(void);
+
+/*
+ * set mux to select desired step (0-indexed)
+ */
+void mux_set_to_step_platform(uint32_t step);
+
+/*
  * called when an ASSERT fails. Reports the filename and line number and spins
  * forever
  */

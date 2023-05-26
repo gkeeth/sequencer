@@ -61,6 +61,32 @@ void toggle_board_led_platform(void) {
     gpio_toggle(PORT_STATUS_LED, PIN_STATUS_LED);
 }
 
+void mux_setup_platform(void) {
+    rcc_periph_clock_enable(RCC_MUX_GPIO);
+    gpio_mode_setup(PORT_MUX, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_MUX_SEL0 | PIN_MUX_SEL1 | PIN_MUX_SEL2);
+    gpio_clear(PORT_MUX, PIN_MUX_SEL0 | PIN_MUX_SEL1 | PIN_MUX_SEL2);
+}
+
+void mux_set_to_step_platform(uint32_t step) {
+    if (step & 0x1) {
+        gpio_set(PORT_MUX, PIN_MUX_SEL0);
+    } else {
+        gpio_clear(PORT_MUX, PIN_MUX_SEL0);
+    }
+
+    if (step & 0x2) {
+        gpio_set(PORT_MUX, PIN_MUX_SEL1);
+    } else {
+        gpio_clear(PORT_MUX, PIN_MUX_SEL1);
+    }
+
+    if (step & 0x4) {
+        gpio_set(PORT_MUX, PIN_MUX_SEL2);
+    } else {
+        gpio_clear(PORT_MUX, PIN_MUX_SEL2);
+    }
+}
+
 void failed_platform(const char *file, int line) {
     uart_send_string("ASSERT FAILED at ");
     uart_send_string(file);

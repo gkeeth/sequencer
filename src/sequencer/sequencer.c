@@ -15,6 +15,7 @@ static void setup(void) {
     uart_setup();
     init_tempo_and_duty_pots();
     switch_setup();
+    mux_setup();
     setup_tempo_and_duty_adc();
     setup_sequencer_clock();
     set_tempo_and_duty(1200, 50); // TODO: don't hardcode; use pots

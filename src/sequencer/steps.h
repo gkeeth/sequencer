@@ -49,4 +49,14 @@ uint32_t get_next_step(uint32_t current_step, uint32_t step_switch_values, skip_
  */
 uint32_t set_leds_for_next_step(uint32_t current_step, uint32_t led_buffer[LED_BUFFER_SIZE]);
 
+/*
+ * set up GPIOs for mux. Selects step 0 initially.
+ */
+void mux_setup(void);
+
+/*
+ * set mux to select desired step (0-indexed)
+ */
+void mux_set_to_step(uint32_t step);
+
 #endif // STEP_LEDS_H
