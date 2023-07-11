@@ -10,7 +10,7 @@ static volatile bool first_half_full = false;
 static volatile uint32_t last_duty_average = 0;
 static volatile uint32_t last_tempo_average = 0;
 
-void setup_sequencer_clock(void) {
+void setup_sequencer_clockout(void) {
     pwm_setup_clock_timer_platform();
 }
 

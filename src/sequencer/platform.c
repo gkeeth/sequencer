@@ -9,6 +9,7 @@
 #include "platform_constants.h"
 #include "platform_utils.h"
 #include "switch.h" // for switch functions in switch ISR
+#include "steps.h"  // for clkin functions in switch ISR
 #include "uart.h"   // for uart logging in asserts
 #include "utils.h"
 
@@ -49,6 +50,8 @@ void SWITCH_TIMER_ISR(void) {
         uint32_t skip_reset_val = (gpio_vals & PIN_SWITCH_SKIP_RESET) ? 0x1 : 0x0;
 
         store_raw_switch_state(step_vals, skip_reset_val);
+
+        store_raw_clkin_state(gpio_get(PORT_SEQCLKIN, PIN_SEQCLKIN));
     }
 }
 
@@ -86,6 +89,12 @@ void mux_set_to_step_platform(uint32_t step) {
         gpio_clear(PORT_MUX, PIN_MUX_SEL2);
     }
 }
+
+void setup_sequencer_clockin_platform(void) {
+    rcc_periph_clock_enable(RCC_SEQCLKIN_GPIO);
+    gpio_mode_setup(PORT_SEQCLKIN, GPIO_MODE_INPUT, GPIO_PUPD_NONE, PIN_SEQCLKIN);
+}
+
 
 void failed_platform(const char *file, int line) {
     uart_send_string("ASSERT FAILED at ");

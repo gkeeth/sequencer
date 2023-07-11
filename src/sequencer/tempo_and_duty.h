@@ -8,7 +8,7 @@
 /*
  * Set up sequencer clock timer with a default tempo and duty
  */
-void setup_sequencer_clock(void);
+void setup_sequencer_clockout(void);
 
 /*
  * set up ADC for reading tempo and duty pots.

@@ -151,3 +151,20 @@ TEST(steps_testgroup, is_step_skipped_test) {
     CHECK_EQUAL(false, is_step_skipped(1, 0b11111110));
     CHECK_EQUAL(false, is_step_skipped(7, 0b11111110));
 }
+
+TEST(steps_testgroup, detect_clkin_edge) {
+    CHECK_FALSE(clkin_rising_edge());
+    store_raw_clkin_state(0x1);
+    CHECK_TRUE(clkin_rising_edge());
+    // don't double-detect an edge...
+    CHECK_FALSE(clkin_rising_edge());
+    // ...even after receiving multiple high readings
+    store_raw_clkin_state(0x1);
+    CHECK_FALSE(clkin_rising_edge());
+    // but detect an edge after a long-enough low period
+    for (uint32_t i = 0; i < 8; ++i) {
+        store_raw_clkin_state(0x0);
+    }
+    store_raw_clkin_state(0x1);
+    CHECK_TRUE(clkin_rising_edge());
+}

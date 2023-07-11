@@ -90,3 +90,26 @@ void mux_setup(void) {
 void mux_set_to_step(uint32_t step) {
     mux_set_to_step_platform(step);
 }
+
+void setup_sequencer_clockin(void) {
+    setup_sequencer_clockin_platform();
+}
+
+static uint32_t clkin_debounce_values = 0;
+static bool clkin_armed = true;
+void store_raw_clkin_state(uint32_t clkin) {
+    clkin_debounce_values = (clkin_debounce_values << 1U) | (!!clkin);
+    clkin_debounce_values &= CLKIN_DEBOUNCE_MASK;
+    if (!clkin_debounce_values) {
+        clkin_armed = true;
+    }
+}
+
+bool clkin_rising_edge(void) {
+    if (clkin_armed && clkin_debounce_values) {
+        clkin_armed = false;
+        return true;
+    } else {
+        return false;
+    }
+}

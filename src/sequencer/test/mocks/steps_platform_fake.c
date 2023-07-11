@@ -13,3 +13,6 @@ void mux_setup_platform(void) {
 void mux_set_to_step_platform(uint32_t step) {
     (void) step;
 }
+
+void setup_sequencer_clockin_platform(void) {
+}

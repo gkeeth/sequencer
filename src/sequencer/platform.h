@@ -121,6 +121,11 @@ void mux_setup_platform(void);
 void mux_set_to_step_platform(uint32_t step);
 
 /*
+ * setup GPIO for clkin
+ */
+void setup_sequencer_clockin_platform(void);
+
+/*
  * called when an ASSERT fails. Reports the filename and line number and spins
  * forever
  */

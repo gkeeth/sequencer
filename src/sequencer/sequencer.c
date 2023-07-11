@@ -17,7 +17,8 @@ static void setup(void) {
     switch_setup();
     mux_setup();
     setup_tempo_and_duty_adc();
-    setup_sequencer_clock();
+    setup_sequencer_clockout();
+    setup_sequencer_clockin();
     set_tempo_and_duty(1200, 50); // TODO: don't hardcode; use pots
 
     setup_step_leds_timer(); // TODO: this won't get live values of switches until switches have been set up for 16ms
@@ -68,7 +69,11 @@ int main(void) {
             last_adc_print_millis = millis();
         }
 
+#if 0
         if ((millis() - last_step_millis) > STEP_DELAY) {
+#else
+        if (clkin_rising_edge()) {
+#endif
             leds_enable_dma();
             last_step_millis = millis();
         }

@@ -89,4 +89,32 @@ void mux_setup(void);
  */
 void mux_set_to_step(uint32_t step);
 
+/*
+ * setup GPIO for sequencer clkin
+ */
+void setup_sequencer_clockin(void);
+
+/*
+ * store raw state of clkin input, to be debounced.
+ *
+ * Needs to be called regularly, e.g. from a timer interrupt.
+ *
+ * - clkin: raw value of clkin GPIO. Zero if clkin is low, nonzero if high.
+ */
+void store_raw_clkin_state(uint32_t clkin);
+
+/*
+ * check whether there's been a rising edge on clkin.
+ *
+ * returns true immediately when there has been a rising edge, with no debounce
+ * delay, but will not return true again until after clkin has been low for a
+ * number of readings (defined by CLKIN_DEBOUNCE_MASK).
+ *
+ * Note that this function needs to be called regularly. If this function is
+ * not called soon enough after a rising edge (i.e. more than the number of
+ * readings defined by CLKIN_DEBOUNCE_MASK are performed), that edge will be
+ * missed.
+ */
+bool clkin_rising_edge(void);
+
 #endif // STEP_LEDS_H
