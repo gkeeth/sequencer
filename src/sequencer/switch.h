@@ -21,7 +21,7 @@ typedef enum {
 void switch_setup(void);
 
 /*
-* set (raw) values for all step switches and the skip/reset switch
+* store raw values for all step switches and the skip/reset switch
 * LSB is step 1
 * For step switches, a 1 bit means PLAY, a 0 bit means SKIP
 * For skip/reset switch, a 1 means SKIP, a 0 means RESET
@@ -29,7 +29,7 @@ void switch_setup(void);
 * This function needs to be called periodically (i.e. based on a timer).
 * Values are debounced after NUM_DEBOUNCE_CYCLES timer events.
 */
-void set_switches(uint32_t raw_step_values, uint32_t raw_skip_reset_value);
+void store_raw_switch_state(uint32_t raw_step_values, uint32_t raw_skip_reset_value);
 
 /*
  * returns debounced state of the step switch for the specified step (0-indexed)

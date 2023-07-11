@@ -48,7 +48,7 @@ void SWITCH_TIMER_ISR(void) {
                            | ((gpio_vals & PIN_SWITCH_STEP7) ? (0x1 << 7) : 0x0);
         uint32_t skip_reset_val = (gpio_vals & PIN_SWITCH_SKIP_RESET) ? 0x1 : 0x0;
 
-        set_switches(step_vals, skip_reset_val);
+        store_raw_switch_state(step_vals, skip_reset_val);
     }
 }
 

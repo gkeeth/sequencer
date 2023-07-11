@@ -14,7 +14,7 @@ void switch_setup(void) {
     switch_setup_platform();
 }
 
-void set_switches(uint32_t raw_step_values, uint32_t raw_skip_reset_value) {
+void store_raw_switch_state(uint32_t raw_step_values, uint32_t raw_skip_reset_value) {
     static uint32_t debounce_index = 0;
     switch_values[debounce_index] = raw_step_values | (raw_skip_reset_value << NUM_STEPS);
     debounce_index = (debounce_index + 1) % NUM_DEBOUNCE_CYCLES;
