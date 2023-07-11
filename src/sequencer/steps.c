@@ -11,18 +11,7 @@ void setup_step_leds_timer(void) {
     pwm_setup_leds_timer_platform();
 }
 
-/*
- * Fills in a single step of an LED buffer with PWM duty values.
- *
- * - buffer: output array that will be a DMA source for the LED PWM DMA. Must
- *           be big enough for NUM_STEPS * 3 colors * 8 bits per color, plus an
- *           additional always-0 step at the end for reset.
- * - red: red brightness, 0-255
- * - green: green brightness, 0-255
- * - blue: blue brightness, 0-255
- * - step: sequencer step to fill in, zero-indexed (0-(NUM_STEPS-1))
- */
-static void leds_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
+void leds_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue, uint32_t step_led) {
 
     ASSERT(step_led < NUM_STEPS);
@@ -45,21 +34,7 @@ static void leds_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
     // the last item in the buffer is always left as 0, as the reset.
 }
 
-/*
- * fill buffer with the appropriate PWM duty cycles for the given step.
- *
- * sets LEDs appropriately for the active step, inactive steps, and any disabled
- * steps.
- *
- * - buffer: output array that will be a DMA source for the LED PWM DMA. Must
- *           be big enough for NUM_STEPS * 3 colors * 8 bits per color, plus an
- *           additional always-0 step at the end for reset.
- * - step: current step (0-indexed)
- * - step_switch_values: bit field of pre-debounced values of the play/skip
- *                       switch for each step. LSB is the first step. A 1 bit
- *                       means PLAY, a 0 bit means SKIP.
- */
-static void leds_set_for_step(uint32_t buffer[LED_BUFFER_SIZE], uint32_t step, uint32_t step_switch_values) {
+void leds_set_for_step(uint32_t buffer[LED_BUFFER_SIZE], uint32_t step, uint32_t step_switch_values) {
     for (uint32_t led = 0; led < NUM_STEPS; ++led) {
         if (led == step) {
             // set to active step color even if the step is disabled

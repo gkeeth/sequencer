@@ -1,9 +1,15 @@
 #include "platform.h"
 #include "steps.h"
 
-void pwm_setup_leds_timer_platform(uint32_t led_buffer[LED_BUFFER_SIZE]) {
-    (void) led_buffer;
+void pwm_setup_leds_timer_platform(void) {
 }
 
 void leds_enable_dma_platform(void) {
+}
+
+void mux_setup_platform(void) {
+}
+
+void mux_set_to_step_platform(uint32_t step) {
+    (void) step;
 }
