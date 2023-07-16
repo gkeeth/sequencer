@@ -95,7 +95,7 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         dma_set_memory_size(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_MSIZE_32BIT);
         dma_set_peripheral_size(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_CCR_PSIZE_32BIT);
         dma_enable_transfer_complete_interrupt(LEDS_DMA, LEDS_DMA_CHANNEL);
-        nvic_enable_irq(NVIC_DMA1_CHANNEL2_3_DMA2_CHANNEL1_2_IRQ); // TODO: make this a define
+        nvic_enable_irq(LEDS_TIM_DMA_IRQ);
 
         timer_set_dma_on_compare_event(timer_peripheral);
         timer_enable_irq(timer_peripheral, TIM_DIER_CC2DE);
@@ -131,8 +131,6 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
 /*
  * set PWM period (ARR) and duty cycle (CCR) for a single timer and output channel.
  * Output channels are hardcoded by SEQCLKOUT_TIM_OC and LEDS_TIM_OC defines.
- * TODO: parameterize the output channels.
- * TODO: this function may be effectively unused, consider removing
  *
  * - timer_peripheral: libopencm3 timer peripheral, e.g. TIM1
  * - period: PWM period (in clock cycles), without any -1 offset.

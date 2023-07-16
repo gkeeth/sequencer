@@ -68,9 +68,6 @@ void adc_setup_platform(uint16_t buffer[ADC_BUFFER_SIZE]) {
     adc_power_on(ADC1);
     adc_start_conversion_regular(ADC1); // won't actually start until trigger
     timer_enable_counter(ADC_TIMER);
-
-    // TODO: measure internal reference and calculate VDDA? Probably not
-    // necessary; strictly speaking a ratio is all we need.
 }
 
 void adc_convert_platform(uint16_t *buf, uint32_t num_conversions) {
