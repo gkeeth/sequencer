@@ -17,11 +17,17 @@ static void setup(void) {
     switch_setup();
     mux_setup();
     setup_tempo_and_duty_adc();
-    setup_sequencer_clockout();
     setup_sequencer_clockin();
-    set_tempo_and_duty(1200, 50); // TODO: don't hardcode; use pots
 
-    setup_step_leds_timer(); // TODO: this won't get live values of switches until switches have been set up for 16ms
+    // wait 20ms for initial debounced pot and switch values to be ready before
+    // we enable the sequencer clkout and step LEDs
+    // (both the step switches and the tempo/duty ADC need 16ms)
+    uint32_t t0 = millis();
+    while ((millis() - t0) < 20U) {};
+
+    setup_sequencer_clockout();
+    set_tempo_and_duty(get_tempo_pot_bpm_tenths(), get_duty_pot_percent());
+    setup_step_leds_timer();
 }
 
 int main(void) {

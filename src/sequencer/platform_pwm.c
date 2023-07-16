@@ -103,6 +103,8 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         timer_set_period(timer_peripheral, LED_DATA_ARR);
         timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
 
+        // NOTE: this function reads the debounced switch values, which are
+        // not valid until the first debounce cycle completes
         set_leds_for_next_step(NUM_STEPS - 1, led_pwm_buffer);
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start

@@ -17,4 +17,3 @@ void sys_tick_handler(void) {
 uint32_t millis(void) {
     return counter;
 }
-
