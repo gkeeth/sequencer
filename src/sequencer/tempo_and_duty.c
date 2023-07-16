@@ -2,6 +2,7 @@
 #include "platform_constants.h"
 #include "platform_utils.h"
 #include "tempo_and_duty.h"
+#include "sequencer.h" // for BPM/duty defines
 #include "utils.h" // for ASSERT()
 
 
@@ -31,8 +32,16 @@ uint32_t get_duty_pot_value(void) {
     return last_duty_average;
 }
 
+uint32_t get_duty_pot_percent(void) {
+    return umap_range(get_duty_pot_value(), 0, 4095, MIN_DUTY_PERCENT, MAX_DUTY_PERCENT);
+}
+
 uint32_t get_tempo_pot_value(void) {
     return last_tempo_average;
+}
+
+uint32_t get_tempo_pot_bpm_tenths(void) {
+    return umap_range(get_tempo_pot_value(), 0, 4095, MIN_BPM_TENTHS, MAX_BPM_TENTHS);
 }
 
 void calculate_tempo_and_duty_block_averages(void) {

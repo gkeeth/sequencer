@@ -27,7 +27,6 @@ static void setup(void) {
 int main(void) {
     const uint32_t BLINK_DELAY = 500;
     const uint32_t ADC_PRINT_DELAY = 800;
-    const uint32_t STEP_DELAY = 500;
 
     setup();
     uint32_t last_flash_millis = millis();
@@ -40,11 +39,12 @@ int main(void) {
             last_flash_millis = millis();
         }
 
-        // TODO: write a wrapper for map_range that abstracts out the pot range (0-4095)
-        uint32_t duty_percent = umap_range(get_duty_pot_value(), 0, 4095, 5, 95);
+        // TODO: check if switch positions have changed, and if so update active steps
+
+        uint32_t duty_percent = get_duty_pot_percent();
         uint32_t tempo_raw = get_tempo_pot_value();
-        uint32_t tempo_bpm = umap_range(tempo_raw, 0, 4095, 30, 300);
-        uint32_t tempo_bpm_tenths = umap_range(tempo_raw, 0, 4095, MIN_BPM_TENTHS, MAX_BPM_TENTHS);
+        uint32_t tempo_bpm_tenths = get_tempo_pot_bpm_tenths();
+        uint32_t tempo_bpm = tempo_bpm_tenths * 10;
 
         if ((millis() - last_adc_print_millis) > ADC_PRINT_DELAY) {
             uart_send_string("tempo (raw): ");
@@ -69,11 +69,7 @@ int main(void) {
             last_adc_print_millis = millis();
         }
 
-#if 0
-        if ((millis() - last_step_millis) > STEP_DELAY) {
-#else
         if (clkin_rising_edge()) {
-#endif
             leds_enable_dma();
             last_step_millis = millis();
         }

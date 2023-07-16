@@ -27,9 +27,19 @@ void init_tempo_and_duty_pots(void);
 uint32_t get_duty_pot_value(void);
 
 /*
- * return the tempo pot's last average value
+ * return the duty pot's last average value as a percent
+ */
+uint32_t get_duty_pot_percent(void);
+
+/*
+ * return the tempo pot's last average value (out of full scale)
  */
 uint32_t get_tempo_pot_value(void);
+
+/*
+ * return the tempo pot's last average value as tenths of BPM
+ */
+uint32_t get_tempo_pot_bpm_tenths(void);
 
 /*
  * set PWM period and duty cycle for sequencer clock based on selected tempo

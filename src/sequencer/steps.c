@@ -95,8 +95,8 @@ void setup_sequencer_clockin(void) {
     setup_sequencer_clockin_platform();
 }
 
-static uint32_t clkin_debounce_values = 0;
-static bool clkin_armed = true;
+static volatile uint32_t clkin_debounce_values = 0;
+static volatile bool clkin_armed = true;
 void store_raw_clkin_state(uint32_t clkin) {
     clkin_debounce_values = (clkin_debounce_values << 1U) | (!!clkin);
     clkin_debounce_values &= CLKIN_DEBOUNCE_MASK;

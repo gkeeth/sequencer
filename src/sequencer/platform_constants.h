@@ -1,9 +1,9 @@
 #ifndef PLATFORM_CONSTANTS_H
 #define PLATFORM_CONSTANTS_H
 
-// TODO: replace a lot of these with stringification
+#include "sequencer.h"
 
-#define NUM_STEPS 8U
+// TODO: replace a lot of these with stringification
 
 #define SYSCLK_FREQ_MHZ 48U
 #define SYSCLK_FREQ_HZ (SYSCLK_FREQ_MHZ * 1000000U)

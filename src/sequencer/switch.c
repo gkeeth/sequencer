@@ -5,7 +5,7 @@
 
 #define STEP_SWITCH_ALL_PLAY 0x01FF
 
-static uint32_t switch_values[NUM_DEBOUNCE_CYCLES] = { 0 };
+static volatile uint32_t switch_values[NUM_DEBOUNCE_CYCLES] = { 0 };
 
 void switch_setup(void) {
     for (uint32_t n = 0; n < NUM_DEBOUNCE_CYCLES; ++n) {

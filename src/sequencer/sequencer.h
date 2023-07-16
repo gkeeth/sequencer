@@ -1,8 +1,11 @@
 #ifndef SEQUENCER_H
 #define SEQUENCER_H
 
+#define NUM_STEPS 8U
 #define MAX_BPM_TENTHS 3000U
 #define MIN_BPM_TENTHS 300U
+#define MAX_DUTY_PERCENT 95U
+#define MIN_DUTY_PERCENT 5U
 
 #endif // SEQUENCER_H
 
