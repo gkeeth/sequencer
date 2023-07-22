@@ -41,7 +41,6 @@ void tempo_to_period_and_prescaler(uint32_t tenths_of_bpm, uint32_t *period, uin
     ASSERT(tenths_of_bpm <= MAX_BPM_TENTHS);
     ASSERT(tenths_of_bpm >= MIN_BPM_TENTHS);
 
-    // TODO: plot this breakdown and check error
     if (MAX_BPM_TENTHS >= tenths_of_bpm && tenths_of_bpm > 2000) {
         *prescaler = 300U;
     } else if (2000 >= tenths_of_bpm && tenths_of_bpm > 1000) {
