@@ -114,7 +114,6 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
         uint32_t duty_percent = 50;
         tempo_to_period_and_prescaler(tenths_of_bpm, &clk_period, &clk_prescaler);
         clk_pwm_compare = duty_to_pwm_compare(clk_period, duty_percent);
-        // TODO: replace with calls to timer_set_period, timer_set_oc_value, timer_set_prescaler
         pwm_set_single_timer_platform(timer_peripheral, clk_period, clk_prescaler, clk_pwm_compare);
     }
 
