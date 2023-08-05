@@ -11,11 +11,11 @@
 /*
  * set up GPIO for board LED
  */
-void led_setup(void);
+void board_led_setup(void);
 
 /*
  * toggle the board LED on or off
  */
-void toggle_board_led(void);
+void board_led_toggle(void);
 
 #endif // LED_H

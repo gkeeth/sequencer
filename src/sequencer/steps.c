@@ -6,11 +6,11 @@
 #include "utils.h"
 #include "steps.h"
 
-
 void setup_step_leds_timer(void) {
     pwm_setup_leds_timer_platform();
 }
 
+// TODO: does this belong in the PWM module or here?
 void leds_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue, uint32_t step_led) {
 
@@ -51,15 +51,23 @@ void leds_enable_dma(void) {
     leds_enable_dma_platform();
 }
 
+// zero-indexed
+static volatile uint32_t current_step = NUM_STEPS - 1;
+
+uint32_t get_current_step(void) {
+    return current_step;
+}
+
+
 // TODO: make static? Need to figure out unit testing.
-uint32_t get_next_step(uint32_t current_step, uint32_t step_switch_values, skip_reset_switch skip_reset_value) {
+uint32_t get_next_step(uint32_t step, uint32_t step_switch_values, skip_reset_switch skip_reset_value) {
     uint32_t next_step = 0; // default to first step if none of the subsequent steps are available
 
-    bool current_skip = is_step_skipped(current_step, step_switch_values);
+    bool current_skip = is_step_skipped(step, step_switch_values);
     bool reset = (skip_reset_value == SWITCH_RESET);
 
     for (uint32_t n = 1; n <= NUM_STEPS; ++n) {
-        uint32_t candidate = (current_step + n) % NUM_STEPS;
+        uint32_t candidate = (step + n) % NUM_STEPS;
         bool candidate_skip = is_step_skipped(candidate, step_switch_values);
         if (reset && (current_skip || candidate_skip)) {
             break; // default next_step is 0
@@ -72,15 +80,14 @@ uint32_t get_next_step(uint32_t current_step, uint32_t step_switch_values, skip_
     return next_step;
 }
 
-uint32_t set_leds_for_next_step(uint32_t current_step, uint32_t led_buffer[LED_BUFFER_SIZE]) {
-        uint32_t step_switch_values = get_step_switches();
-        skip_reset_switch reset_switch_value = get_skip_reset_switch();
-        uint32_t next_step = get_next_step(current_step, step_switch_values, reset_switch_value);
+uint32_t advance_to_next_step(uint32_t cur_step, uint32_t step_switch_values,
+        skip_reset_switch reset_switch_value) {
+    uint32_t next_step = get_next_step(cur_step, step_switch_values, reset_switch_value);
 
-        mux_set_to_step(next_step);
-        leds_set_for_step(led_buffer, next_step, step_switch_values);
+    current_step = next_step;
+    mux_set_to_step(next_step);
 
-        return next_step;
+    return next_step;
 }
 
 void mux_setup(void) {

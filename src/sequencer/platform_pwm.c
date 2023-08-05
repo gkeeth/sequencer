@@ -23,7 +23,8 @@ static void pwm_set_single_timer_platform(uint32_t timer_peripheral,
  * 3 colors are repeated 8x, once for each step
  * the last item is always 0, which is a reset.
  */
-static uint32_t led_pwm_buffer[LED_BUFFER_SIZE] = {0};
+// static uint32_t led_pwm_buffer[LED_BUFFER_SIZE] = {0};
+extern uint32_t led_pwm_buffer[];
 
 void pwm_setup_leds_timer_platform(void) {
     pwm_setup_timer_platform(LEDS_TIMER);
@@ -105,7 +106,11 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
 
         // NOTE: this function reads the debounced switch values, which are
         // not valid until the first debounce cycle completes
-        set_leds_for_next_step(NUM_STEPS - 1, led_pwm_buffer);
+        // TODO: commented for now, need to decide if this is necessary.
+        // This gets called every 1ms by an interrupt anyway; it may be ok for
+        // the LEDs to be off for the first 1ms
+        // alternatively, use leds_set_for_step(led_pwm_buffer, get_current_step(), get_step_switches());
+        // set_leds_for_next_step(NUM_STEPS - 1, led_pwm_buffer);
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
         uint32_t clk_period;
@@ -189,7 +194,6 @@ void leds_enable_dma_platform(void) {
  *    remains 0 from the last item in the buffer, which acts as the LED reset.
  * 2. clear the interrupt flag
  * 3. reset the DMA's memory address to the start of the buffer
- * 4. set up the buffer for the next step
  */
 void dma1_channel2_3_dma2_channel1_2_isr(void) {
     if (dma_get_interrupt_flag(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_TCIF)) {
@@ -199,8 +203,5 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
         dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
         dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_pwm_buffer);
         dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
-
-        static uint32_t current_step = NUM_STEPS - 1;
-        current_step = set_leds_for_next_step(current_step, led_pwm_buffer);
     }
 }

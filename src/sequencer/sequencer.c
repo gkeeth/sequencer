@@ -11,7 +11,7 @@
 static void setup(void) {
     clock_setup();
 
-    led_setup();
+    board_led_setup();
     uart_setup();
     init_tempo_and_duty_pots();
     switch_setup();
@@ -37,11 +37,10 @@ int main(void) {
     setup();
     uint32_t last_flash_millis = millis();
     uint32_t last_adc_print_millis = last_flash_millis;
-    uint32_t last_step_millis = last_flash_millis;
 
     while (1) {
         if ((millis() - last_flash_millis) > BLINK_DELAY) {
-            toggle_board_led();
+            board_led_toggle();
             last_flash_millis = millis();
         }
 
@@ -70,14 +69,12 @@ int main(void) {
             uart_send_string("debounced step switch values: ");
             uart_send_number((int32_t) get_step_switches());
 
+            uart_send_string("current step: ");
+            uart_send_number((int32_t) get_current_step());
+
             uart_send_line("");
 
             last_adc_print_millis = millis();
-        }
-
-        if (clkin_rising_edge()) {
-            leds_enable_dma();
-            last_step_millis = millis();
         }
 
         set_tempo_and_duty(tempo_bpm_tenths, duty_percent);

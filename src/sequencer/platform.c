@@ -34,6 +34,16 @@ void switch_setup_platform(void) {
     timer_enable_counter(SWITCH_TIMER);
 }
 
+/*
+ * green, red, blue
+ * each color has 8 bits, MSB first
+ * 3 colors are repeated 8x, once for each step
+ * the last item is always 0, which is a reset.
+ */
+// TODO: ideally this would be static, but we need to reference this in the dma
+// interrupt in platform_pwm.c. Consider moving both to the same c file.
+uint32_t led_pwm_buffer[LED_BUFFER_SIZE] = {0};
+
 void SWITCH_TIMER_ISR(void) {
     if (timer_get_flag(SWITCH_TIMER, TIM_SR_UIF)) {
         timer_clear_flag(SWITCH_TIMER, TIM_SR_UIF);
@@ -52,6 +62,19 @@ void SWITCH_TIMER_ISR(void) {
         store_raw_switch_state(step_vals, skip_reset_val);
 
         store_raw_clkin_state(gpio_get(PORT_SEQCLKIN, PIN_SEQCLKIN));
+
+        uint32_t current_step = get_current_step();
+        uint32_t step_switch_values = get_step_switches();
+        skip_reset_switch reset_switch_value = get_skip_reset_switch();
+        if (clkin_rising_edge()) {
+            current_step = advance_to_next_step(current_step, step_switch_values,
+                    reset_switch_value);
+        }
+
+        // TODO: steps seem to advance appropriately, and the buffer changes appropriately, but the LEDs don't change.
+        // dma interrupt never fires
+        leds_set_for_step(led_pwm_buffer, current_step, step_switch_values);
+        leds_enable_dma();
     }
 }
 

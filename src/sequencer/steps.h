@@ -51,33 +51,39 @@ void leds_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
 void leds_enable_dma(void);
 
 /*
+ * return current step number (0-indexed)
+ */
+uint32_t get_current_step(void);
+
+/*
  * calculate the next step based on the current step, accounting for each step's
  * step/reset switch and the global skip/reset switch.
  *
- * current_step and the returned value are both 0-indexed.
+ * Both the step argument and the returned next step value are 0-indexed.
  *
- * - current_step: the current step (0-indexed)
+ * - step: current step (0-indexed)
  * - step_switch_values: bit field of pre-debounced values of the play/skip
  *                       switch for each step. LSB is the first step. A 1 bit
  *                       means PLAY, a 0 bit means SKIP.
  * - skip_reset_value: value of the skip/reset switch. 1 means SKIP, a 0 means
  *                     RESET
  */
-uint32_t get_next_step(uint32_t current_step, uint32_t step_switch_values, skip_reset_switch skip_reset_value);
+uint32_t get_next_step(uint32_t step, uint32_t step_switch_values, skip_reset_switch skip_reset_value);
 
 /*
- * fill LED buffer with the appropriate PWM duty cycles for the step after the
- * given step. Reads the step switches and the skip/reset switch, determining
- * the next step and setting the LEDs on/off as appropriate.
+ * increments to the next step (reading step switches and skip/reset switch to
+ * choose the next step appropriately).
  *
- * Returns the calculated next step.
+ * Sets the output CV mux to the new step. Does not update the LED buffer.
  *
- * - current_step: the current step (0-indexed)
- * - led_buffer: output array that will be a DMA source for the LED PWM DMA.
- *               Must be big enough for NUM_STEPS * 3 colors * 8 bits per
- *               color, plus an additional always-0 step at the end for reset.
+ * Returns the calculated next step (0-indexed).
+ *
+ * - cur_step: current step (0-indexed)
+ * - step_switch_values: current debounced step switches, as returned from get_step_switches()
+ * - reset_switch_value: current debounced skip/reset switch, as returned from get_skip_reset_switch()
  */
-uint32_t set_leds_for_next_step(uint32_t current_step, uint32_t led_buffer[LED_BUFFER_SIZE]);
+uint32_t advance_to_next_step(uint32_t cur_step, uint32_t step_switch_values,
+        skip_reset_switch reset_switch_value);
 
 /*
  * set up GPIOs for mux. Selects step 0 initially.
