@@ -86,6 +86,8 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
 
     if (timer_peripheral == LEDS_TIMER) {
         rcc_periph_clock_enable(RCC_LEDS_DMA);
+        dma_disable_channel(LEDS_DMA, LEDS_DMA_CHANNEL);
+        dma_clear_interrupt_flags(LEDS_DMA, LEDS_DMA_CHANNEL, DMA_TCIF);
         dma_set_peripheral_address(LEDS_DMA, LEDS_DMA_CHANNEL, LEDS_TIM_CCR_ADDRESS);
         dma_set_memory_address(LEDS_DMA, LEDS_DMA_CHANNEL, (uint32_t) led_pwm_buffer);
         dma_set_number_of_data(LEDS_DMA, LEDS_DMA_CHANNEL, LED_BUFFER_SIZE);
