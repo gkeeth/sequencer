@@ -10,7 +10,6 @@ void setup_step_leds_timer(void) {
     pwm_setup_leds_timer_platform();
 }
 
-// TODO: does this belong in the PWM module or here?
 void leds_set_step_to_color(uint32_t buffer[LED_BUFFER_SIZE],
         uint8_t red, uint8_t green, uint8_t blue, uint32_t step_led) {
 
@@ -58,8 +57,6 @@ uint32_t get_current_step(void) {
     return current_step;
 }
 
-
-// TODO: make static? Need to figure out unit testing.
 uint32_t get_next_step(uint32_t step, uint32_t step_switch_values, skip_reset_switch skip_reset_value) {
     uint32_t next_step = 0; // default to first step if none of the subsequent steps are available
 

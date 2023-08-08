@@ -28,11 +28,16 @@ void clock_setup_platform(void) {
 void switch_setup_platform(void) {
     rcc_periph_clock_enable(RCC_SWITCH_GPIO);
     gpio_mode_setup(PORT_SWITCH, GPIO_MODE_INPUT, GPIO_PUPD_NONE, PIN_SWITCHES);
-    rcc_periph_clock_enable(RCC_SWITCH_TIMER);
-    timer_set_period(SWITCH_TIMER, timer_hz_to_arr(SWITCH_READ_RATE_HZ));
-    timer_enable_irq(SWITCH_TIMER, TIM_DIER_UIE);
-    nvic_enable_irq(SWITCH_TIMER_IRQ);
-    timer_enable_counter(SWITCH_TIMER);
+
+    tick_setup_platform(); // also run in led_setup_platform()
+}
+
+void tick_setup_platform(void) {
+    rcc_periph_clock_enable(RCC_TICK_TIMER);
+    timer_set_period(TICK_TIMER, timer_hz_to_arr(TICK_RATE_HZ));
+    timer_enable_irq(TICK_TIMER, TIM_DIER_UIE);
+    nvic_enable_irq(TICK_TIMER_IRQ);
+    timer_enable_counter(TICK_TIMER);
 }
 
 /*
@@ -41,9 +46,7 @@ void switch_setup_platform(void) {
  * 3 colors are repeated 8x, once for each step
  * the last item is always 0, which is a reset.
  */
-// TODO: ideally this would be static, but we need to reference this in the dma
-// interrupt in platform_pwm.c. Consider moving both to the same c file.
-uint32_t led_pwm_buffer[LED_BUFFER_SIZE] = {0};
+static uint32_t led_pwm_buffer[LED_BUFFER_SIZE] = {0};
 
 static bool pwm_allowed_timer(uint32_t timer_peripheral);
 static void pwm_setup_timer_platform(uint32_t timer_peripheral);
@@ -130,14 +133,6 @@ static void pwm_setup_timer_platform(uint32_t timer_peripheral) {
 
         timer_set_period(timer_peripheral, LED_DATA_ARR);
         timer_set_oc_value(timer_peripheral, timer_output_channel, 0);
-
-        // NOTE: this function reads the debounced switch values, which are
-        // not valid until the first debounce cycle completes
-        // TODO: commented for now, need to decide if this is necessary.
-        // This gets called every 1ms by an interrupt anyway; it may be ok for
-        // the LEDs to be off for the first 1ms
-        // alternatively, use leds_set_for_step(led_pwm_buffer, get_current_step(), get_step_switches());
-        // set_leds_for_next_step(NUM_STEPS - 1, led_pwm_buffer);
     } else { // SEQCLKOUT_TIMER
         uint32_t tenths_of_bpm = 1200U; // arbitrarily chose 120BPM to start
         uint32_t clk_period;
@@ -214,9 +209,9 @@ void pwm_set_clock_period_and_duty_platform(uint32_t period, uint32_t prescaler,
 void leds_enable_dma_platform(void) {
     dma_enable_channel(LEDS_DMA, LEDS_DMA_CHANNEL);
 }
-void SWITCH_TIMER_ISR(void) {
-    if (timer_get_flag(SWITCH_TIMER, TIM_SR_UIF)) {
-        timer_clear_flag(SWITCH_TIMER, TIM_SR_UIF);
+void TICK_TIMER_ISR(void) {
+    if (timer_get_flag(TICK_TIMER, TIM_SR_UIF)) {
+        timer_clear_flag(TICK_TIMER, TIM_SR_UIF);
 
         uint32_t gpio_vals = gpio_port_read(PORT_SWITCH);
         uint32_t step_vals = ((gpio_vals & PIN_SWITCH_STEP0) ? (0x1 << 0) : 0x0)
@@ -241,8 +236,6 @@ void SWITCH_TIMER_ISR(void) {
                     reset_switch_value);
         }
 
-        // TODO: steps seem to advance appropriately, and the buffer changes appropriately, but the LEDs don't change.
-        // dma interrupt never fires
         leds_set_for_step(led_pwm_buffer, current_step, step_switch_values);
         leds_enable_dma();
     }
@@ -269,6 +262,7 @@ void dma1_channel2_3_dma2_channel1_2_isr(void) {
 void led_setup_platform(void) {
     rcc_periph_clock_enable(RCC_STATUS_LED_GPIO);
     gpio_mode_setup(PORT_STATUS_LED, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, PIN_STATUS_LED);
+    tick_setup_platform();
 }
 
 void toggle_board_led_platform(void) {

@@ -44,8 +44,6 @@ int main(void) {
             last_flash_millis = millis();
         }
 
-        // TODO: check if switch positions have changed, and if so update active steps
-
         uint32_t duty_percent = get_duty_pot_percent();
         uint32_t tempo_raw = get_tempo_pot_value();
         uint32_t tempo_bpm_tenths = get_tempo_pot_bpm_tenths();

@@ -13,6 +13,11 @@
 #define EXTERNC
 #endif
 
+/*
+ * set up system clocks
+ *
+ * external 8MHz crystal drives 48MHz internal clock, with a 1ms systick
+ */
 void clock_setup_platform(void);
 
 /*
@@ -64,6 +69,12 @@ void adc_convert_platform(uint16_t *buffer, uint32_t num_conversions);
  * switches automatically
  */
 void switch_setup_platform(void);
+
+/*
+ * set up timer and interrupt to read/debounce switches, check for sequencer
+ * input clock edge, and refresh LED DMA
+ */
+void tick_setup_platform(void);
 
 /*
  * (re-) enable DMA for the step LEDs. This can be used to trigger a step LED
