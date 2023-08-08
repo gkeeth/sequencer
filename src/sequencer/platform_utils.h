@@ -5,21 +5,6 @@
 #include <stdbool.h>
 
 /*
- * convert period in milliseconds to a value for a timer's ARR register,
- * including the -1 offset. The value of prescaler does not include the -1
- * offset: for an un-prescaled timer, prescaler should be 1.
- *
- * The maximum allowable period is:
- *   UINT16_MAX * prescaler / 1000 / SYSCLK_FREQ_MHZ
- * This is enforced by assertion. (TODO: verify)
- *
- * The returned value for ARR is clamped to a minimum of 0.
- *
- * TODO: remove if unused
- */
-uint16_t timer_ms_to_arr(uint32_t period_ms, uint32_t prescaler);
-
-/*
  * convert desired output frequency in hertz to a value for a timer's ARR
  * register, including the -1 offset. A prescaler value of 0 (no prescaler) is
  * assumed.
@@ -32,19 +17,6 @@ uint16_t timer_ms_to_arr(uint32_t period_ms, uint32_t prescaler);
  * i.e. 1 clock tick.
  */
 uint16_t timer_hz_to_arr(uint32_t frequency_hz);
-
-/*
- * convert period in nanoseconds to a value for a timer's ARR register,
- * including the -1 offset. A prescaler value of 0 (no prescaler) is assumed.
- *
- * The maximum allowable period is UINT16_MAX / SYSCLK_FREQ_MHZ / 1000
- *
- * Returned ARR value includes the -1 offset, and is clamped to a minimum of 0,
- * i.e. 1 clock tick.
- *
- * TODO: remove if unused
- */
-uint16_t timer_ns_to_arr(uint32_t period_ns);
 
 /*
  * convert a tempo in tenths of bpm to an appropriate clock period and prescaler.

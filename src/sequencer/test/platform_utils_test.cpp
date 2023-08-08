@@ -18,12 +18,6 @@ TEST_GROUP(platform_utils_testgroup) {
         assert_fake_setup(false);
     }
 
-    void timer_ms_to_arr_expect_assert(uint32_t period_ms, uint32_t prescaler) {
-        assert_fake_setup(true);
-        timer_ms_to_arr(period_ms, prescaler);
-        FAIL("did not hit expected assert in timer_ms_to_arr");
-    }
-
     void duty_to_pwm_compare_expect_assert(uint32_t period, uint32_t duty_percent) {
         assert_fake_setup(true);
         duty_to_pwm_compare(period, duty_percent);
@@ -44,45 +38,7 @@ TEST_GROUP(platform_utils_testgroup) {
         timer_hz_to_arr(frequency_hz);
         FAIL("did not hit expected assert in timer_hz_to_arr");
     }
-
-    void timer_ns_to_arr_expect_assert(uint32_t period_ns) {
-        assert_fake_setup(true);
-        timer_ns_to_arr(period_ns);
-        FAIL("did not hit expected assert in timer_ns_to_arr");
-    }
 };
-
-
-// timer_ms_to_arr()
-TEST(platform_utils_testgroup, timer_ms_to_arr_in_range) {
-    uint32_t PERIOD_MS_30_BPM = 60 * 1000 / 30;
-    uint32_t PERIOD_MS_300_BPM = 60 * 1000 / 300;
-    CHECK_EQUAL(48000 - 1, timer_ms_to_arr(PERIOD_MS_30_BPM, 2000));
-    CHECK_EQUAL(4800 - 1, timer_ms_to_arr(PERIOD_MS_300_BPM, 2000));
-    CHECK_EQUAL(65519, timer_ms_to_arr(2730, 2000));
-    CHECK_EQUAL(48000 - 1, timer_ms_to_arr(1, 1));
-    CHECK_EQUAL(0, timer_ms_to_arr(0, 2000));
-}
-
-TEST(platform_utils_testgroup, timer_ms_to_arr_assert_period_out_of_range) {
-    timer_ms_to_arr_expect_assert(3000, 2000);
-}
-
-TEST(platform_utils_testgroup, timer_ms_to_arr_assert_psc_out_of_range_min) {
-    timer_ms_to_arr_expect_assert(0, 0);
-}
-
-TEST(platform_utils_testgroup, timer_ms_to_arr_assert_psc_out_of_range_max) {
-    timer_ms_to_arr_expect_assert(0, UINT16_MAX + 2U);
-}
-
-TEST(platform_utils_testgroup, timer_ms_to_arr_assert_overflow) {
-    timer_ms_to_arr_expect_assert(UINT32_MAX, 1);
-}
-
-TEST(platform_utils_testgroup, timer_ms_to_arr_assert_too_big) {
-    timer_ms_to_arr_expect_assert(2, 1);
-}
 
 
 // tempo_to_period_and_prescaler()
@@ -155,27 +111,4 @@ TEST(platform_utils_testgroup, timer_hz_to_arr_nonzero_frequency_assertion) {
 
 TEST(platform_utils_testgroup, timer_hz_to_arr_result_size_assertion) {
     timer_hz_to_arr_expect_assert(732);
-}
-
-
-// timer_ns_to_arr()
-TEST(platform_utils_testgroup, timer_ns_to_arr_conversion) {
-    CHECK_EQUAL(0, timer_ns_to_arr(21U));
-    CHECK_EQUAL(47, timer_ns_to_arr(1000));
-    CHECK_EQUAL(UINT16_MAX, timer_ns_to_arr(1365354));
-}
-
-TEST(platform_utils_testgroup, timer_ns_to_arr_clamp_to_zero) {
-    CHECK_EQUAL(0, timer_ns_to_arr(0)); // clamped
-    CHECK_EQUAL(0, timer_ns_to_arr(21)); // not clamped
-}
-
-TEST(platform_utils_testgroup, timer_ns_to_arr_period_overflow_assertion) {
-    // careful, this will hit the 16bit assert even if it doesn't hit the
-    // period_ns assert first...
-    timer_ns_to_arr_expect_assert(89478486);
-}
-
-TEST(platform_utils_testgroup, timer_ns_to_arr_period_16bit_assertion) {
-    timer_ns_to_arr_expect_assert(1365355);
 }

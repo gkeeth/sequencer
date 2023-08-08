@@ -3,8 +3,6 @@
 
 #include "sequencer.h"
 
-// TODO: replace a lot of these with stringification
-
 #define SYSCLK_FREQ_MHZ 48U
 #define SYSCLK_FREQ_HZ (SYSCLK_FREQ_MHZ * 1000000U)
 

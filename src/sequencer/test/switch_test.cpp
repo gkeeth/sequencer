@@ -1,6 +1,8 @@
 #include "CppUTest/TestHarness.h"
 #include <cstdint>
 
+#include "assert_fake.h"
+
 extern "C" {
 #include "platform_constants.h"
 #include "switch.h"
@@ -44,10 +46,10 @@ TEST(switch_testgroup, set_all_switches) {
     CHECK_EQUAL(1, get_skip_reset_switch());
 }
 
-// TODO: figure out how to mock out the assert
-IGNORE_TEST(switch_testgroup, out_of_bounds_step) {
-    get_step_switch(0);
+TEST(switch_testgroup, out_of_bounds_step) {
+    assert_fake_setup(true);
     get_step_switch(NUM_STEPS);
+    CHECK_TRUE(assert_get_hit());
 }
 
 TEST(switch_testgroup, debounce_step_switches) {

@@ -4,37 +4,11 @@
 #include "platform_constants.h"
 #include "utils.h"
 
-uint16_t timer_ms_to_arr(uint32_t period_ms, uint32_t prescaler) {
-    // test for prescaler validity
-    ASSERT(prescaler > 0);
-    ASSERT(prescaler <= UINT16_MAX + 1U); // prescaler-1 must fit in a 16-bit reg
-
-    static_assert(SYSCLK_FREQ_MHZ <= UINT32_MAX / 1000U, "SYSCLK_FREQ_MHZ too large");
-    const uint32_t SYSCLK_FREQ_KHZ = 1000U * SYSCLK_FREQ_MHZ;
-
-    // prevent overflow
-    ASSERT(prescaler <= SYSCLK_FREQ_KHZ);
-    ASSERT(period_ms <= UINT32_MAX / SYSCLK_FREQ_KHZ * prescaler);
-    const uint32_t arr =  umax(1, (SYSCLK_FREQ_KHZ / prescaler * period_ms)) - 1;
-    // now check that it'll fit into a 16-bit register
-    ASSERT(arr <= UINT16_MAX);
-
-    return (uint16_t) arr;
-}
-
 uint16_t timer_hz_to_arr(uint32_t frequency_hz) {
     ASSERT(frequency_hz != 0);
     uint32_t ticks = SYSCLK_FREQ_HZ / frequency_hz;
     ASSERT(ticks <= UINT16_MAX + 1);
     return (uint16_t) (umax(1, ticks) - 1U);
-}
-
-uint16_t timer_ns_to_arr(uint32_t period_ns) {
-    ASSERT(period_ns <= UINT32_MAX / SYSCLK_FREQ_MHZ);
-    uint32_t ticks = SYSCLK_FREQ_MHZ * period_ns / 1000U;
-
-    ASSERT(ticks <= UINT16_MAX + 1)
-    return (uint16_t) (umax(ticks, 1) - 1);
 }
 
 void tempo_to_period_and_prescaler(uint32_t tenths_of_bpm, uint32_t *period, uint32_t *prescaler) {
